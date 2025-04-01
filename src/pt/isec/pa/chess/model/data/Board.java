@@ -1,19 +1,25 @@
 package pt.isec.pa.chess.model.data;
 
+import java.util.ArrayList;
+
 public class Board {
     //* column a to h
     //* row 1 to 8
     private static final int BOARD_SIZE = 8;
 
-    private static Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
 
-    Board() {
+    private static Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
+    private static Piece[][] nextMoveBoard;
+    private static ArrayList<int []> movelist= new ArrayList<>();
+
+
+
+    public Board() {
         this.setupBoard();
     }
 
     private void setupBoard() {
-        //TODO rever lógica
-        // board [coluna, linha]
+        //? devo considerar que as peças brancas podem estar em cima ou em baixo? (isto mexe com os vetores),teria de ter um bool whiteontop para verificar tudo
         for (int column = 0; column <= BOARD_SIZE-1; column++) {
             for (int row = 0; row <= BOARD_SIZE-1; row++) {
                 if(row == 2) {
@@ -65,20 +71,60 @@ public class Board {
         }
     }
 
-    public void addPiece(Piece piece, int column, int row) {}
+    public boolean addPiece(Piece piece, int column, int row) {
+        // será chamado com addPiece (Knight,1,1); com o uso de uma factory de peças
+        if(board[column][row] != null) return false;
+        board[column][row] = piece;
+        return true;
+    }
 
-    public void removePiece(Piece piece,int column, int row) {}
+    public boolean removePiece(int column, int row) {
+        //checks if piece can be removed
+        //! if(board[column][row] instanceof King) return false; //viola o encapsulamento e polimorfismo
+        if(board[column][row].isKing())
+            return false;
+        board[column][row] = null;
+        return true;
+    }
 
+    public boolean movePiece(Piece piece, int column, int row, boolean isWhite) {
+        if (checkMove(piece, column, row, isWhite)){
+            board[column][row] = piece;
+        return true;
+    }
+        return false;
+    }
 
-    public boolean checkMove(int column, int row) {
+    public boolean checkMove(Piece piece,int column, int row,boolean isWhite) {
         //checks if piece can be moved
         //eventually will call checkCheck method
-        return false;
+        nextMoveBoard = board.clone();
+        nextMoveBoard[column][row] = piece;
+        return checkCheck(isWhite,true);
     }
 
-    public boolean checkCheck(Piece piece, int column, int row) {
-        return false;
+    public boolean checkCheck(boolean isWhite, boolean selfCheck) {
+        //checks if player is in check (self check is when a player is moving a piece)
+
+        for (int column = 0; column <= BOARD_SIZE - 1; column++) {
+            for (int row = 0; row <= BOARD_SIZE - 1; row++) {
+                if(selfCheck) {
+                    //TODO pelo move set de cada peça verificar se alguma atinge o próprio king a usar o nextMoveBoard
+                    //aplicar vetor de movimento até encontrar uma peça ou estar fora da board (quando encontro uma peça verifico se é King)
+                    for (MoveVector move : nextMoveBoard[column][row].getMoves()){
+                        if(isWhite) {
+                            if (nextMoveBoard[move.column()][move.row()].isKing() && nextMoveBoard[move.column()][move.row()].isWhite)
+                                return true;
+                        }
+                    }
+                }
+
+            }
+        }
+    return false;
     }
+
+
 
 
     @Override
@@ -90,13 +136,12 @@ public class Board {
             for (int row = 0; row <= BOARD_SIZE-1; row++) {
                 if (board[column][row] != null) {
                     buffer.append(board[column][row].toString()).append(positions[column][row]);
+                    if(!board[column][row].hasMovedMark())
+                        buffer.append("*");
                 }
             }
         }
-
-
-
-          return "";
+        return buffer.toString();
     }
 
 

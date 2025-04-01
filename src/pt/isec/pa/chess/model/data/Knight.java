@@ -1,6 +1,7 @@
 package pt.isec.pa.chess.model.data;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class Knight extends Piece {
 
@@ -8,9 +9,14 @@ public class Knight extends Piece {
         super.isWhite = isWhite;
     }
 
-    public ArrayList<int [][]> getMoves(int column, int row) {
-        //returns all possible moves for the king
-        return null;
+    @Override
+    public ArrayList<MoveVector> getMoves() {
+        return new ArrayList<>(List.of(
+                new MoveVector(2, 1), new MoveVector(1, 2),
+                new MoveVector(-1, 2), new MoveVector(-2, 1),
+                new MoveVector(-2, -1), new MoveVector(-1, -2),
+                new MoveVector(1, -2), new MoveVector(2, -1)
+        ));
     }
     @Override
     public String toString() {
@@ -20,4 +26,5 @@ public class Knight extends Piece {
             return "n";
         }
     }
+
 }
