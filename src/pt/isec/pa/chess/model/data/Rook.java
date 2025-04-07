@@ -1,20 +1,51 @@
 package pt.isec.pa.chess.model.data;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class Rook extends Piece {
     boolean hasMoved = false;
-    public Rook(boolean isWhite) {
+    public Rook(boolean isWhite,Square position) {
         super.isWhite = isWhite;
+        super.position = position;
     }
+
     @Override
-    public ArrayList<MoveVector> getMoves() {
-        return new ArrayList<>(List.of(
-                new MoveVector(1, 0), new MoveVector(-1, 0),
-                new MoveVector(0, 1), new MoveVector(0, -1)
-        ));
+    public ArrayList<Square> getMoves(Board board) {
+        ArrayList<Square> moves = new ArrayList<>();
+
+        int[][] directions = {
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1}
+        };
+
+        int col = this.position.column();
+        int row = this.position.row();
+
+        for (int[] dir : directions) {
+            int currentCol = col;
+            int currentRow = row;
+
+            while (true) {
+                currentCol += dir[0];
+                currentRow += dir[1];
+
+                if (!board.isWithinBounds(currentCol, currentRow)) break;
+
+                Piece targetPiece = board.getPieceAt(currentCol, currentRow);
+
+                if (targetPiece == null) {
+                    moves.add(new Square(currentCol, currentRow));
+                } else {
+                    if (targetPiece.isWhite() != this.isWhite()) {
+                        moves.add(new Square(currentCol, currentRow));
+                    }
+                    break;
+                }
+            }
+        }
+
+        return moves;
     }
+
 
     @Override
     public String toString() {
@@ -24,10 +55,7 @@ public class Rook extends Piece {
             return "r";
         }
     }
-    @Override
-    public boolean isRepeatable() {
-        return true;
-    }
+
     @Override
     public boolean hasMovedMark() {
         return hasMoved;

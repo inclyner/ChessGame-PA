@@ -13,9 +13,7 @@ public class Board implements Serializable {
     private static final int BOARD_SIZE = 8;
 
 
-    private static Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
-    private static Piece[][] nextMoveBoard;
-    private static ArrayList<int []> movelist= new ArrayList<>();
+    private Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
     private boolean isWhitePlaying;
 
 
@@ -26,124 +24,82 @@ public class Board implements Serializable {
 
 
     private void setupBoard() {
-        //? devo considerar que as peças brancas podem estar em cima ou em baixo? (isto mexe com os vetores),teria de ter um bool whiteontop para verificar tudo
-        //TODO tirar ifs e meter so board[0][0] = factory ROOT  por exemplo9
-        for (int column = 0; column <= BOARD_SIZE-1; column++) {
-            for (int row = 0; row <= BOARD_SIZE-1; row++) {
-                if(row == 2) {
-                    row = 6;
-                    column=0;
-                } //skips middle of the board
-                if (column == 0 || column == 7) {
-                    if (row == 0) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.ROOK, true), column, row);
-                        //board[column][row] = new Rook(true);
-                    } else if (row == 7) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.ROOK, false), column, row);
-                        //board[column][row] = new Rook(false);
-                    }
-                }
-                if (column == 1 || column == 6) {
-                    if (row == 0) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.KNIGHT, true), column, row);
-                        //board[column][row] = new Knight(true);
-                    } else if (row == 7) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.KNIGHT, false), column, row);
-                        //board[column][row] = new Knight(false);
-                    }
-                }
-                if (column == 2 || column == 5) {
-                    if (row == 0) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.BISHOP, true), column, row);
-                        //board[column][row] = new Bishop(true);
-                    } else if (row == 7) {
-                        //board[column][row] = new Bishop(false);
-                        addPiece(PieceFactoryType.createPiece(PieceType.BISHOP, false), column, row);
-                    }
-                }
-                if (column == 4) {
-                    if (row == 0) {
-                        //board[column][row] = new King(true);
-                        addPiece(PieceFactoryType.createPiece(PieceType.KING, true), column, row);
-                    } else if (row == 7) {
-                        //board[column][row] = new King(false);
-                        addPiece(PieceFactoryType.createPiece(PieceType.KING, false), column, row);
-                    }
-                }
-                if (column == 5) {
-                    if (row == 0 ) {
-                        addPiece(PieceFactoryType.createPiece(PieceType.QUEEN, true), column, row);
-                        //board[column][row] = new Queen(true);
-                    } else if (row ==7) {
-                        //board[column][row] = new Queen(false);
-                        addPiece(PieceFactoryType.createPiece(PieceType.QUEEN, false), column, row);
-                    }
-                }
-                if (row == 1) {
-                    //oard[column][row] = new Pawn(true);
-                    addPiece(PieceFactoryType.createPiece(PieceType.PAWN, true), column, row);
-                }
-                if (row == 6) {
-                    //board[column][row] = new Pawn(false);
-                    addPiece(PieceFactoryType.createPiece(PieceType.PAWN, false), column, row);
+        // Primeira linha (brancas)
+        addPiece(PieceType.ROOK, true, 0, 0);
+        addPiece(PieceType.KNIGHT, true, 1, 0);
+        addPiece(PieceType.BISHOP, true, 2, 0);
+        addPiece(PieceType.QUEEN, true, 3, 0);
+        addPiece(PieceType.KING, true, 4, 0);
+        addPiece(PieceType.BISHOP, true, 5, 0);
+        addPiece(PieceType.KNIGHT, true, 6, 0);
+        addPiece(PieceType.ROOK, true, 7, 0);
 
-                }
-            }
+        // Peões brancos
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            addPiece(PieceType.PAWN, true, col, 1);
         }
+
+        // Peões pretos
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            addPiece(PieceType.PAWN, false, col, 6);
+        }
+
+        // Primeira linha (pretas)
+        addPiece(PieceType.ROOK, false, 0, 7);
+        addPiece(PieceType.KNIGHT, false, 1, 7);
+        addPiece(PieceType.BISHOP, false, 2, 7);
+        addPiece(PieceType.QUEEN, false, 3, 7);
+        addPiece(PieceType.KING, false, 4, 7);
+        addPiece(PieceType.BISHOP, false, 5, 7);
+        addPiece(PieceType.KNIGHT, false, 6, 7);
+        addPiece(PieceType.ROOK, false, 7, 7);
     }
 
-    public boolean addPiece(Piece piece, int column, int row) {
+
+    public boolean addPiece(PieceType type,boolean isWhite, int column, int row) {
         // será chamado com addPiece (Knight,1,1); com o uso de uma factory de peças
+        Square sq = new Square(column,row);
+        Piece piece=PieceFactoryType.createPiece(type,isWhite,sq);
         if(board[column][row] != null) return false;
+
         board[column][row] = piece;
         return true;
     }
 
     public boolean removePiece(int column, int row) {
         //checks if piece can be removed
-        //! if(board[column][row] instanceof King) return false; //viola o encapsulamento e polimorfismo
-        if(board[column][row].isKing())
+        if(board[column][row] != null && board[column][row].isKing())
             return false;
         board[column][row] = null;
         return true;
     }
 
-    public boolean movePiece(Piece piece, int column, int row, boolean isWhite) {
-        if (checkMove(piece, column, row, isWhite)){
+
+    public boolean movePiece(Piece piece, int column, int row, boolean isWhitePlaying) {
+        if (checkMove(piece, column, row, isWhitePlaying)) {
+            piece.position= new Square(column, row);
+            piece.setHasMoved();
             board[column][row] = piece;
             return true;
         }
         return false;
+
     }
 
-    //TODO a peça sabe que é branco ou preta, a partir daqui entra o jogador (o isWhite nao entra aqui)
-    public boolean checkMove(Piece piece,int column, int row,boolean isWhite) {
-        //checks if piece can be moved
-        //eventually will call checkCheck method
-        nextMoveBoard = board.clone();
-        nextMoveBoard[column][row] = piece;
-        return checkCheck(isWhite,true);
-    }
 
-    public boolean checkCheck(boolean isWhite, boolean selfCheck) {
+
+    public boolean checkMove(Piece piece, int column, int row, boolean isWhitePlaying) {
         //checks if player is in check (self check is when a player is moving a piece)
+        if (piece == null || piece.isWhite() != isWhitePlaying)
+            return false;
 
-        for (int column = 0; column <= BOARD_SIZE - 1; column++) {
-            for (int row = 0; row <= BOARD_SIZE - 1; row++) {
-                if(selfCheck) {
-                    //TODO pelo move set de cada peça verificar se alguma atinge o próprio king a usar o nextMoveBoard
-                    //aplicar vetor de movimento até encontrar uma peça ou estar fora da board (quando encontro uma peça verifico se é King)
-                    for (MoveVector move : nextMoveBoard[column][row].getMoves()){
-                        if(isWhite) {
-                            if (nextMoveBoard[move.column()][move.row()].isKing() && nextMoveBoard[move.column()][move.row()].isWhite)
-                                return true;
-                        }
-                    }
-                }
-
-            }
+        ArrayList<Square> possibleMoves = piece.getMoves(this);
+        for (Square s : possibleMoves) {
+            if (s.column() == column && s.row() == row)
+                return true;
         }
-    return false;
+        return false;
+
     }
 
 
@@ -190,7 +146,7 @@ public class Board implements Serializable {
             char pieceChar = piece.charAt(0);
             char columnChar = piece.charAt(1);
             char rowChar = piece.charAt(2);
-            Piece p = PieceFactoryTxt.createPiece(pieceChar);
+            Piece p = PieceFactoryTxt.createPiece(pieceChar); //TODO adicionar aqui o square para construir de razi e nao usao o pircefactorytxt a chamar o piecefactorytype
             if((pieceChar=='r' || pieceChar =='R' ||pieceChar=='k' || pieceChar =='K')&& piece.length()!=4)
                 p.setHasMoved();
             int columnIndex = Arrays.asList(positions[0]).indexOf(columnChar);
@@ -200,5 +156,12 @@ public class Board implements Serializable {
     }
 
 
+    public boolean isWithinBounds(int col, int row) {
+        return col < BOARD_SIZE && row < BOARD_SIZE;
+    }
+
+    public Piece getPieceAt(int col, int row) {
+        return board[col][row];
+    }
 }
 

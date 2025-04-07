@@ -24,10 +24,9 @@ public class ChessGame implements Serializable {
         return board.isWhitePlaying();
     }
 
-//! não está de acordo com o padrão facade
     public void importGame(String boardString) {
         board.clear();
         board.importGame(boardString);
 
-
+    }
 }

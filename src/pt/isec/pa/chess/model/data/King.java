@@ -1,26 +1,68 @@
 package pt.isec.pa.chess.model.data;
 
 import java.util.ArrayList;
-import java.util.List;
 
 public class King extends Piece {
-    ArrayList<MoveVector> movelist = new ArrayList<>();
     boolean hasMoved = false;
-    public King(boolean isWhite) {
+    public King(boolean isWhite,Square position) {
         super.isWhite = isWhite;
+        super.position = position;
     }
 
 
 
-    public ArrayList<MoveVector> getMoves() {
-        //returns all possible moves for the king
-        movelist = new ArrayList<>(List.of(
-                new MoveVector(1, 1), new MoveVector(1, 0), new MoveVector(1, -1),
-                new MoveVector(0, 1), new MoveVector(0, -1),
-                new MoveVector(-1, 1), new MoveVector(-1, 0), new MoveVector(-1, -1)
-        ));
-        return movelist;
+    @Override
+    public ArrayList<Square> getMoves(Board board) {
+        ArrayList<Square> moves = new ArrayList<>();
+
+        int[][] directions = {
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
+                {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+        };
+
+        int col = this.position.column();
+        int row = this.position.row();
+
+        for (int[] dir : directions) {
+            int targetCol = col + dir[0];
+            int targetRow = row + dir[1];
+
+            if (!board.isWithinBounds(targetCol, targetRow)) continue;
+
+            Piece targetPiece = board.getPieceAt(targetCol, targetRow);
+
+            if (targetPiece == null || targetPiece.isWhite() != this.isWhite()){
+                moves.add(new Square(targetCol, targetRow));
+            }
+        }
+
+        //castle
+        if (!this.hasMoved) {
+            // small castle
+            Piece rookKingside = board.getPieceAt(7, row);
+            if (rookKingside instanceof Rook rook && !rook.hasMoved()) {
+                boolean empty1 = board.getPieceAt(5, row) == null;
+                boolean empty2 = board.getPieceAt(6, row) == null;
+                if (empty1 && empty2) {
+                    moves.add(new Square(6, row));
+                }
+            }
+
+            // big castle
+            Piece rookQueenside = board.getPieceAt(0, row);
+            if (rookQueenside instanceof Rook rook && !rook.hasMoved()) {
+                boolean empty1 = board.getPieceAt(1, row) == null;
+                boolean empty2 = board.getPieceAt(2, row) == null;
+                boolean empty3 = board.getPieceAt(3, row) == null;
+                if (empty1 && empty2 && empty3) {
+                    moves.add(new Square(2, row));
+                }
+            }
+        }
+
+        return moves;
     }
+
 
     @Override
     public String toString() {
@@ -34,7 +76,7 @@ public class King extends Piece {
 
     @Override
     public boolean isKing() {
-    return false;}
+    return true;}
 
     @Override
     public boolean hasMovedMark() {

@@ -1,20 +1,15 @@
 package pt.isec.pa.chess.model.data;
 
-enum PieceType {
-    KING, QUEEN, BISHOP, KNIGHT, ROOK, PAWN
-}
-
 public class PieceFactoryType {
 
-    static Piece createPiece( PieceType type, boolean isWhite) {
+    static Piece createPiece( PieceType type, boolean isWhite, Square square) {
         return switch (type) {
-            case KING -> new King(isWhite);
-            case QUEEN -> new Queen(isWhite);
-            case BISHOP -> new Bishop(isWhite);
-            case KNIGHT -> new Knight(isWhite);
-            case ROOK -> new Rook(isWhite);
-            case PAWN -> new Pawn(isWhite);
-            default -> null;
+            case KING -> new King(isWhite,square);
+            case QUEEN -> new Queen(isWhite,square);
+            case BISHOP -> new Bishop(isWhite,square);
+            case KNIGHT -> new Knight(isWhite,square);
+            case ROOK -> new Rook(isWhite,square);
+            case PAWN -> new Pawn(isWhite,square);
         };
     }
 

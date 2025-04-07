@@ -12,9 +12,10 @@ public abstract class Piece implements Serializable {
     @Serial
     static final long serialVersionUID = 100L;
     boolean isWhite;
+    Square position;
 
     // method gets a list of all possible moves, including attacks
-    public abstract ArrayList<MoveVector> getMoves();
+    public abstract ArrayList<Square> getMoves(Board board);
     //? os moves vao passar a ser calculados em cada peça
 
 
@@ -29,9 +30,10 @@ public abstract class Piece implements Serializable {
 
     public boolean hasMovedMark(){
         return false;
-    };
+    }
 
-    public void setHasMoved(){};
+    public void setHasMoved(){}
 
+    public boolean isWhite(){return isWhite;}
 
 }
