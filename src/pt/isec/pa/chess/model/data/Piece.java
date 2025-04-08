@@ -6,34 +6,45 @@ import java.util.ArrayList;
 
 //TODO as peças têm acesso a board
 
-
-
-public abstract class Piece implements Serializable {
+public class Piece implements Serializable {
     @Serial
     static final long serialVersionUID = 100L;
-    boolean isWhite;
-    Square position;
+    protected Square position; // Change from private to protected
+    private boolean isWhite; // Whether the piece is white or black
+    private boolean hasMoved; // Whether the piece has moved
 
-    // method gets a list of all possible moves, including attacks
-    public abstract ArrayList<Square> getMoves(Board board);
-    //? os moves vao passar a ser calculados em cada peça
+    public Piece(Square position, boolean isWhite) {
+        this.position = position;
+        this.isWhite = isWhite;
+        this.hasMoved = false;
+    }
 
+    public Square getPosition() {
+        return position;
+    }
 
+    public void setPosition(Square position) {
+        this.position = position;
+    }
 
+    public boolean isWhite() {
+        return isWhite;
+    }
 
     public boolean hasMoved() {
-        return false;
+        return hasMoved;
     }
+
+    public void setHasMoved() {
+        this.hasMoved = true;
+    }
+
     public boolean isKing() {
-        return false;
+        return false; // Override in King class
     }
 
-    public boolean hasMovedMark(){
-        return false;
+    public ArrayList<Square> getMoves(Board board) {
+        // Override in specific piece classes (e.g., Pawn, Rook, etc.)
+        return new ArrayList<>();
     }
-
-    public void setHasMoved(){}
-
-    public boolean isWhite(){return isWhite;}
-
 }

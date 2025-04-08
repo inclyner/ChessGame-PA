@@ -4,20 +4,19 @@ import java.util.ArrayList;
 
 public class King extends Piece {
     boolean hasMoved = false;
-    public King(boolean isWhite,Square position) {
+
+    public King(boolean isWhite, Square position) {
         super.isWhite = isWhite;
         super.position = position;
     }
-
-
 
     @Override
     public ArrayList<Square> getMoves(Board board) {
         ArrayList<Square> moves = new ArrayList<>();
 
         int[][] directions = {
-                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
-                {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+                { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 },
+                { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 }
         };
 
         int col = this.position.column();
@@ -27,17 +26,20 @@ public class King extends Piece {
             int targetCol = col + dir[0];
             int targetRow = row + dir[1];
 
-            if (!board.isWithinBounds(targetCol, targetRow)) continue;
+            if (!board.isWithinBounds(targetCol, targetRow))
+                continue;
 
             Piece targetPiece = board.getPieceAt(targetCol, targetRow);
 
-            if (targetPiece == null || targetPiece.isWhite() != this.isWhite()){
+            if (targetPiece == null || targetPiece.isWhite() != this.isWhite()) {
                 moves.add(new Square(targetCol, targetRow));
             }
         }
 
-        //castle
+        // castle
         if (!this.hasMoved) {
+            // TODO: verificar se o rei passa por uma casa atacada ou termina nela
+
             // small castle
             Piece rookKingside = board.getPieceAt(7, row);
             if (rookKingside instanceof Rook rook && !rook.hasMoved()) {
@@ -63,10 +65,9 @@ public class King extends Piece {
         return moves;
     }
 
-
     @Override
     public String toString() {
-        //? o * mete-se aqui?
+        // ? o * mete-se aqui?
         if (isWhite) {
             return "K";
         } else {
@@ -76,11 +77,7 @@ public class King extends Piece {
 
     @Override
     public boolean isKing() {
-    return true;}
-
-    @Override
-    public boolean hasMovedMark() {
-        return hasMoved;
+        return true;
     }
 
     @Override
@@ -89,10 +86,8 @@ public class King extends Piece {
     }
 
     @Override
-    public void setHasMoved(){
-        hasMoved=true;
+    public void setHasMoved() {
+        hasMoved = true;
     }
 
-
 }
-
