@@ -2,21 +2,18 @@ package pt.isec.pa.chess.model.data;
 
 import java.util.ArrayList;
 
-public class Queen extends Piece {
-    public Queen(boolean isWhite,Square position) {
+public class Rook extends Piece {
+    boolean hasMoved = false;
+    public Rook(boolean isWhite) {
         super.isWhite = isWhite;
-        super.position = position;
     }
-
-
 
     @Override
     public ArrayList<Square> getMoves(Board board) {
         ArrayList<Square> moves = new ArrayList<>();
 
         int[][] directions = {
-                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
-                {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+                {1, 0}, {-1, 0}, {0, 1}, {0, -1}
         };
 
         int col = this.position.column();
@@ -52,12 +49,25 @@ public class Queen extends Piece {
     @Override
     public String toString() {
         if (isWhite) {
-            return "Q";
+            return "R";
         } else {
-            return "q";
+            return "r";
         }
     }
 
+    @Override
+    public boolean hasMovedMark() {
+        return hasMoved;
+    }
 
+    @Override
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    @Override
+    public void setHasMoved(){
+        hasMoved=true;
+    }
 
 }

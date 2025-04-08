@@ -1,34 +1,50 @@
 package pt.isec.pa.chess.model.data;
 
+import java.io.Serial;
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public abstract class Piece {
-    boolean isWhite;
+//TODO as peças têm acesso a board
 
-    // method gets a list of all possible moves, including attacks
-    public abstract ArrayList<MoveVector> getMoves();
-    //? como os Moves são final, isto será definido na factory?
-    //? seria definido no construtor de cada peça
+public class Piece implements Serializable {
+    @Serial
+    static final long serialVersionUID = 100L;
+    protected Square position; // Change from private to protected
+    private boolean isWhite; // Whether the piece is white or black
+    private boolean hasMoved; // Whether the piece has moved
 
+    public Piece(Square position, boolean isWhite) {
+        this.position = position;
+        this.isWhite = isWhite;
+        this.hasMoved = false;
+    }
 
+    public Square getPosition() {
+        return position;
+    }
 
-    public boolean isRepeatable() {
-        return false;
+    public void setPosition(Square position) {
+        this.position = position;
+    }
+
+    public boolean isWhite() {
+        return isWhite;
     }
 
     public boolean hasMoved() {
-        return false;
+        return hasMoved;
     }
+
+    public void setHasMoved() {
+        this.hasMoved = true;
+    }
+
     public boolean isKing() {
-        //its not removable
-        return false;
+        return false; // Override in King class
     }
 
-    public boolean hasMovedMark(){
-        return false;
-    };
-
-    public void setHasMoved(){};
-
-
+    public ArrayList<Square> getMoves(Board board) {
+        // Override in specific piece classes (e.g., Pawn, Rook, etc.)
+        return new ArrayList<>();
+    }
 }
