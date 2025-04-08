@@ -146,11 +146,13 @@ public class Board implements Serializable {
             char pieceChar = piece.charAt(0);
             char columnChar = piece.charAt(1);
             char rowChar = piece.charAt(2);
-            Piece p = PieceFactoryTxt.createPiece(pieceChar); //TODO adicionar aqui o square para construir de razi e nao usao o pircefactorytxt a chamar o piecefactorytype
+            int columnIndex = columnChar - 'a'; //
+            int rowIndex = 8 - Character.getNumericValue(rowChar); // linha 8 → índice 0
+            Square position= new Square(columnIndex,rowIndex);
+            Piece p = PieceFactoryTxt.createPiece(pieceChar,position);
             if((pieceChar=='r' || pieceChar =='R' ||pieceChar=='k' || pieceChar =='K')&& piece.length()!=4)
                 p.setHasMoved();
-            int columnIndex = Arrays.asList(positions[0]).indexOf(columnChar);
-            int rowIndex = rowChar -1;
+
             board[columnIndex][rowIndex]=p;
         }
     }
