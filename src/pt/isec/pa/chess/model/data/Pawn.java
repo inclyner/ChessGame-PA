@@ -6,8 +6,7 @@ import java.util.ArrayList;
 public class Pawn extends Piece {
     boolean hasMoved = false;
     public Pawn(boolean isWhite, Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
     }
 
 
@@ -18,7 +17,7 @@ public class Pawn extends Piece {
         int col = this.position.column();
         int row = this.position.row();
 
-        int direction = this.isWhite ? 1 : -1;
+        int direction = this.isWhite() ? 1 : -1;
         int oneStepRow = row + direction;
 
         if (board.isWithinBounds(col, oneStepRow) && board.getPieceAt(col, oneStepRow) == null) {
@@ -49,7 +48,7 @@ public class Pawn extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite) {
+        if (isWhite()) {
             return "P";
         } else {
             return "p";

@@ -4,8 +4,7 @@ import java.util.ArrayList;
 
 public class Queen extends Piece {
     public Queen(boolean isWhite,Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
     }
 
 
@@ -51,7 +50,7 @@ public class Queen extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite) {
+        if (isWhite()) {
             return "Q";
         } else {
             return "q";

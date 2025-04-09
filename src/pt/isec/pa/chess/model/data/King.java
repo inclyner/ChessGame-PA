@@ -6,8 +6,7 @@ public class King extends Piece {
     boolean hasMoved = false;
 
     public King(boolean isWhite, Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
     }
 
     @Override
@@ -67,8 +66,7 @@ public class King extends Piece {
 
     @Override
     public String toString() {
-        // ? o * mete-se aqui?
-        if (isWhite) {
+        if (isWhite()) {
             return "K";
         } else {
             return "k";

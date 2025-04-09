@@ -5,8 +5,8 @@ import java.util.ArrayList;
 public class Bishop extends Piece {
 
     public Bishop(boolean isWhite,Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
+
     }
 
     @Override
@@ -49,7 +49,7 @@ public class Bishop extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite) {
+        if (isWhite()) {
             return "B";
         } else {
             return "b";
