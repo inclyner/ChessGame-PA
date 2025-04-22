@@ -13,6 +13,8 @@ public class ChessGame implements Serializable {
     private Player blackPlayer;
     private Player currentPlayer;
     private int moveCount;
+    private Square lastMoveFrom;
+    private Square lastMoveTo;
 
     public ChessGame() {
         this.board = new Board();
@@ -30,10 +32,33 @@ public class ChessGame implements Serializable {
             return false;
         }
 
+        if (piece instanceof King king) {
+            if (!king.hasMoved()) {
+                int row = from.row();
+                if (to.equals(new Square(6, row))) { // Short castle
+                    board.movePiece(board.getPieceAt(7, row), 5, row, king.isWhite());
+                } else if (to.equals(new Square(2, row))) { // Long castle
+                    board.movePiece(board.getPieceAt(0, row), 3, row, king.isWhite());
+                }
+            }
+        }
+
+        if (piece instanceof Pawn pawn) {
+            // En passant
+            if (from.column() != to.column() && board.getPieceAt(to.column(), to.row()) == null) {
+                int capturedPawnRow = to.row() + (pawn.isWhite() ? -1 : 1);
+                board.removePiece(to.column(), capturedPawnRow);
+            }
+        }
+
         // Tenta mover
         if (board.movePiece(piece, to.column(), to.row(), currentPlayer.isWhite())) {
             // Remove a peça da posiçao anterior
             board.removePiece(from.column(), from.row());
+
+            // Verifica o ultimo moivemento
+            lastMoveFrom = from;
+            lastMoveTo = to;
 
             moveCount++;
             switchPlayer();
@@ -83,5 +108,11 @@ public class ChessGame implements Serializable {
         gameState.append(board.toString());
 
         return gameState.toString();
+    }
+
+    public boolean startGame(String player1, String player2) {
+        this.whitePlayer = new Player(true);
+        this.blackPlayer = new Player(false);
+        return true;
     }
 }

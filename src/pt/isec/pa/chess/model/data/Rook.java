@@ -6,8 +6,7 @@ public class Rook extends Piece {
     boolean hasMoved = false;
 
     public Rook(boolean isWhite, Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
     }
 
     @Override
@@ -50,7 +49,7 @@ public class Rook extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite) {
+        if (isWhite()) {
             return "R";
         } else {
             return "r";

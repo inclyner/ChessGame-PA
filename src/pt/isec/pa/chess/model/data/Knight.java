@@ -5,8 +5,7 @@ import java.util.ArrayList;
 public class Knight extends Piece {
 
     public Knight(boolean isWhite,Square position) {
-        super.isWhite = isWhite;
-        super.position = position;
+        super(position, isWhite);
     }
 
 
@@ -42,7 +41,7 @@ public class Knight extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite) {
+        if (isWhite()) {
             return "N";
         } else {
             return "n";
