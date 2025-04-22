@@ -84,4 +84,10 @@ public class ChessGame implements Serializable {
 
         return gameState.toString();
     }
+
+    public boolean startGame(String player1, String player2) {
+        this.whitePlayer= new Player(true);
+        this.blackPlayer= new Player(false);
+        return true;
+    }
 }
