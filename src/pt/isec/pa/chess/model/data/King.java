@@ -37,25 +37,29 @@ public class King extends Piece {
 
         // castle
         if (!this.hasMoved) {
-            // TODO: verificar se o rei passa por uma casa atacada ou termina nela
-
-            // small castle
+            // Short Castle
             Piece rookKingside = board.getPieceAt(7, row);
             if (rookKingside instanceof Rook rook && !rook.hasMoved()) {
                 boolean empty1 = board.getPieceAt(5, row) == null;
                 boolean empty2 = board.getPieceAt(6, row) == null;
-                if (empty1 && empty2) {
+                boolean safe1 = !board.isSquareUnderAttack(new Square(4, row), this.isWhite());
+                boolean safe2 = !board.isSquareUnderAttack(new Square(5, row), this.isWhite());
+                boolean safe3 = !board.isSquareUnderAttack(new Square(6, row), this.isWhite());
+                if (empty1 && empty2 && safe1 && safe2 && safe3) {
                     moves.add(new Square(6, row));
                 }
             }
 
-            // big castle
+            // Long Castle
             Piece rookQueenside = board.getPieceAt(0, row);
             if (rookQueenside instanceof Rook rook && !rook.hasMoved()) {
                 boolean empty1 = board.getPieceAt(1, row) == null;
                 boolean empty2 = board.getPieceAt(2, row) == null;
                 boolean empty3 = board.getPieceAt(3, row) == null;
-                if (empty1 && empty2 && empty3) {
+                boolean safe1 = !board.isSquareUnderAttack(new Square(4, row), this.isWhite());
+                boolean safe2 = !board.isSquareUnderAttack(new Square(3, row), this.isWhite());
+                boolean safe3 = !board.isSquareUnderAttack(new Square(2, row), this.isWhite());
+                if (empty1 && empty2 && empty3 && safe1 && safe2 && safe3) {
                     moves.add(new Square(2, row));
                 }
             }

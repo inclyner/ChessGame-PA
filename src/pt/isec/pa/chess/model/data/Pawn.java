@@ -1,14 +1,13 @@
 package pt.isec.pa.chess.model.data;
 
-
 import java.util.ArrayList;
 
 public class Pawn extends Piece {
     boolean hasMoved = false;
+
     public Pawn(boolean isWhite, Square position) {
         super(position, isWhite);
     }
-
 
     @Override
     public ArrayList<Square> getMoves(Board board) {
@@ -30,21 +29,37 @@ public class Pawn extends Piece {
             }
         }
 
-        int[] diagonalCols = {col - 1, col + 1};
+        int[] diagonalCols = { col - 1, col + 1 };
         for (int diagCol : diagonalCols) {
-            if (!board.isWithinBounds(diagCol, oneStepRow)) continue;
+            if (!board.isWithinBounds(diagCol, oneStepRow))
+                continue;
 
+            // Regular diagonal capture
             Piece target = board.getPieceAt(diagCol, oneStepRow);
             if (target != null && target.isWhite() != this.isWhite()) {
                 moves.add(new Square(diagCol, oneStepRow));
+            }
+
+            // En passant capture
+            if (board.isWithinBounds(diagCol, row)) {
+                if ((isWhite() && row == 4) || (!isWhite() && row == 3)) {
+                    Piece adjacentPawn = board.getPieceAt(diagCol, row);
+                    if (adjacentPawn instanceof Pawn && adjacentPawn.isWhite() != this.isWhite()) {
+                        Square lastMoveFrom = board.getLastMoveFrom();
+                        Square lastMoveTo = board.getLastMoveTo();
+
+                        if (lastMoveFrom != null && lastMoveTo != null &&
+                                lastMoveFrom.equals(new Square(diagCol, row + (this.isWhite() ? -2 : 2))) &&
+                                lastMoveTo.equals(new Square(diagCol, row))) {
+                            moves.add(new Square(diagCol, oneStepRow));
+                        }
+                    }
+                }
             }
         }
 
         return moves;
     }
-
-
-
 
     @Override
     public String toString() {
@@ -55,14 +70,13 @@ public class Pawn extends Piece {
         }
     }
 
-
     @Override
     public boolean hasMoved() {
         return hasMoved;
     }
 
     @Override
-    public void setHasMoved(){
-        hasMoved=true;
+    public void setHasMoved() {
+        hasMoved = true;
     }
 }

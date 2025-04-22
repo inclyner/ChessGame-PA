@@ -13,6 +13,8 @@ public class Board implements Serializable {
     private static final int BOARD_SIZE = 8;
 
     private Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
+    private Square lastMoveFrom;
+    private Square lastMoveTo;
 
     public Board() {
         this.setupBoard();
@@ -71,6 +73,9 @@ public class Board implements Serializable {
 
     public boolean movePiece(Piece piece, int column, int row, boolean isWhitePlaying) {
         if (checkMove(piece, column, row, isWhitePlaying)) {
+            lastMoveFrom = piece.getPosition();
+            lastMoveTo = new Square(column, row);
+
             piece.position = new Square(column, row);
             piece.setHasMoved();
             board[column][row] = piece;
@@ -213,5 +218,34 @@ public class Board implements Serializable {
             }
         }
         throw new IllegalStateException("King not found on the board for the player.");
+    }
+
+    public boolean isSquareUnderAttack(Square square, boolean isWhite) {
+        for (Piece piece : getAllPieces()) {
+            if (piece.isWhite() != isWhite && piece.getMoves(this).contains(square)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private ArrayList<Piece> getAllPieces() {
+        ArrayList<Piece> pieces = new ArrayList<>();
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                if (board[col][row] != null) {
+                    pieces.add(board[col][row]);
+                }
+            }
+        }
+        return pieces;
+    }
+
+    public Square getLastMoveFrom() {
+        return lastMoveFrom;
+    }
+
+    public Square getLastMoveTo() {
+        return lastMoveTo;
     }
 }
