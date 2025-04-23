@@ -4,6 +4,7 @@ import java.util.ArrayList;
 
 public class Pawn extends Piece {
     boolean hasMoved = false;
+    private boolean needsPromotion = false;
 
     public Pawn(boolean isWhite, Square position) {
         super(position, isWhite);
@@ -59,6 +60,32 @@ public class Pawn extends Piece {
         }
 
         return moves;
+    }
+
+    /**
+     * Checks if the pawn needs promotion (has reached the opposite end)
+     */
+    public boolean needsPromotion() {
+        int row = this.position.row();
+        return (isWhite() && row == 7) || (!isWhite() && row == 0);
+    }
+
+    public Piece promote(Board board, PieceType type) {
+        if (!needsPromotion()) {
+            return this;
+        }
+
+        // Tipos de peças válidos para promoção
+        if (type != PieceType.QUEEN && type != PieceType.ROOK &&
+                type != PieceType.BISHOP && type != PieceType.KNIGHT) {
+            return this;
+        }
+
+        // Cria uma nova peça
+        Piece promotedPiece = PieceFactoryType.createPiece(type, this.isWhite(), this.position);
+        promotedPiece.setHasMoved(); // Marca a peça como movida, para normalizar
+
+        return promotedPiece;
     }
 
     @Override
