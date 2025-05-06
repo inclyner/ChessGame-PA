@@ -268,42 +268,42 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void drawPiece(GraphicsContext gc, Piece piece, int col, int row,
             double cellSize, double padding) {
-        // Update piece drawing to use padding offset
         double x = padding + col * cellSize;
         double y = padding + row * cellSize;
 
-        gc.setFill(piece.isWhite() ? PIECE_WHITE : PIECE_BLACK);
-        gc.setStroke(piece.isWhite() ? PIECE_BLACK : PIECE_WHITE);
+        // Get piece type from string representation
+        String pieceChar = piece.toString().toUpperCase();
+        boolean isWhite = piece.isWhite();
+
+        // Draw piece based on type
+        gc.setFill(isWhite ? PIECE_WHITE : PIECE_BLACK);
+        gc.setStroke(isWhite ? PIECE_BLACK : PIECE_WHITE);
         gc.setLineWidth(1.5);
 
         double piecePadding = cellSize * 0.15;
         double size = cellSize - (2 * piecePadding);
 
-        String pieceSymbol = getPieceSymbol(piece);
-        gc.setFont(javafx.scene.text.Font.font("Arial", size * 0.8));
-
-        gc.strokeText(pieceSymbol, x + size / 4, y + size * 0.75);
-        gc.fillText(pieceSymbol, x + size / 4, y + size * 0.75);
-    }
-
-    private String getPieceSymbol(Piece piece) {
-        String symbol = piece.toString().toLowerCase();
-        return switch (symbol) {
-            case "k" ->
-                "♔";
-            case "q" ->
-                "♕";
-            case "r" ->
-                "♖";
-            case "b" ->
-                "♗";
-            case "n" ->
-                "♘";
-            case "p" ->
-                "♙";
+        // Use Unicode chess symbols
+        String symbol = switch (pieceChar) {
+            case "K" ->
+                isWhite ? "♔" : "♚";
+            case "Q" ->
+                isWhite ? "♕" : "♛";
+            case "R" ->
+                isWhite ? "♖" : "♜";
+            case "B" ->
+                isWhite ? "♗" : "♝";
+            case "N" ->
+                isWhite ? "♘" : "♞";
+            case "P" ->
+                isWhite ? "♙" : "♟";
             default ->
                 "?";
         };
+
+        gc.setFont(Font.font("Arial", size * 0.8));
+        gc.strokeText(symbol, x + size / 4, y + size * 0.75);
+        gc.fillText(symbol, x + size / 4, y + size * 0.75);
     }
 
     @Override
