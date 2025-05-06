@@ -1,118 +1,164 @@
 package pt.isec.pa.chess.model.data;
 
-import java.io.Serial;
 import java.io.Serializable;
 
 //Facade
 public class ChessGame implements Serializable {
-    @Serial
-    static final long serialVersionUID = 100L;
 
-    private Board board;
-    private Player whitePlayer;
-    private Player blackPlayer;
+    private final Board board;
     private Player currentPlayer;
-    private int moveCount;
-    private Square lastMoveFrom;
-    private Square lastMoveTo;
+    private final Player whitePlayer;
+    private final Player blackPlayer;
+    private boolean isGameOver = false;
 
     public ChessGame() {
-        this.board = new Board();
-        this.whitePlayer = new Player(true);
-        this.blackPlayer = new Player(false);
-        this.currentPlayer = whitePlayer;
-        this.moveCount = 0;
+        board = new Board();
+        whitePlayer = new Player(true);
+        blackPlayer = new Player(false);
+        currentPlayer = whitePlayer; // White starts
+    }
+
+    public boolean startGame(String player1Name, String player2Name) {
+        whitePlayer.setName(player1Name);
+        blackPlayer.setName(player2Name);
+        return true;
     }
 
     public boolean move(Square from, Square to) {
-        Piece piece = board.getPieceAt(from.column(), from.row()); // Posição inicial
+        if (isGameOver) {
+            return false; // Cannot make moves after game is over
+        }
 
-        // Checa se a peça existe e se é do jogador atual
+        Piece piece = board.getPieceAt(from.column(), from.row());
+
+        // Verify it's the correct player's turn
         if (piece == null || piece.isWhite() != currentPlayer.isWhite()) {
             return false;
         }
 
-        if (piece instanceof King king) {
-            if (!king.hasMoved()) {
-                int row = from.row();
-                if (to.equals(new Square(6, row))) { // Short castle
-                    board.movePiece(board.getPieceAt(7, row), 5, row, king.isWhite());
-                } else if (to.equals(new Square(2, row))) { // Long castle
-                    board.movePiece(board.getPieceAt(0, row), 3, row, king.isWhite());
+        // Check if player is in check and this move doesn't resolve it
+        if (board.isPlayerInCheck(currentPlayer.isWhite())) {
+            // Try the move - if it doesn't resolve check, it's invalid
+            if (!board.movePiece(from, to)) {
+                return false;
+            }
+        } else {
+            // Normal move when not in check
+            if (!board.movePiece(from, to)) {
+                return false;
+            }
+        }
+
+        // Move was successful, switch turns first
+        switchTurn();
+
+        // Check if this move ended the game
+        Board.GameResult result = board.getGameResult();
+        if (result != Board.GameResult.IN_PROGRESS) {
+            isGameOver = true;
+            // Don't switch turns if game is over
+            return true;
+        }
+
+        return true;
+    }
+
+    private void switchTurn() {
+        currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
+    }
+
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+
+    public Board getBoard() {
+        return board;
+    }
+
+    public void importGame(String gameState) {
+        String[] lines = gameState.split("\n");
+        if (lines.length < 10) // 1 turn line + 8 board lines + 2 player names
+        {
+            throw new IllegalArgumentException("Invalid game state format");
+        }
+
+        // Set current turn
+        currentPlayer = lines[0].equals("W") ? whitePlayer : blackPlayer;
+
+        // Import board state
+        for (int row = 0; row < 8; row++) {
+            String boardRow = lines[row + 1];
+            for (int col = 0; col < 8; col++) {
+                char pieceChar = boardRow.charAt(col);
+                if (pieceChar != '.') {
+                    board.setPieceFromChar(col, row, pieceChar);
                 }
             }
         }
 
-        if (piece instanceof Pawn pawn) {
-            // En passant
-            if (from.column() != to.column() && board.getPieceAt(to.column(), to.row()) == null) {
-                int capturedPawnRow = to.row() + (pawn.isWhite() ? -1 : 1);
-                board.removePiece(to.column(), capturedPawnRow);
-            }
-        }
-
-        // Tenta mover
-        if (board.movePiece(piece, to.column(), to.row(), currentPlayer.isWhite())) {
-            // Remove a peça da posiçao anterior
-            board.removePiece(from.column(), from.row());
-
-            // Verifica o ultimo moivemento
-            lastMoveFrom = from;
-            lastMoveTo = to;
-
-            moveCount++;
-            switchPlayer();
-            return true;
-        }
-
-        return false;
-    }
-
-    private void switchPlayer() {
-        currentPlayer = (currentPlayer == whitePlayer) ? blackPlayer : whitePlayer;
-    }
-
-    public boolean checkEndGame() {
-        return board.checkEndGame();
-    }
-
-    public void importGame(String gameState) {
-        // Dividir os dados exportados
-        String[] split = gameState.split(",", 3);
-
-        // Definir o jogador atual
-        this.currentPlayer = split[0].equalsIgnoreCase("WHITE") ? whitePlayer : blackPlayer;
-
-        // Definir o número de jogadas
-        this.moveCount = Integer.parseInt(split[1]);
-
-        // Recriar o tabuleiro vazio e importar o estado
-        this.board = new Board();
-        this.board.importGame(split[2]);
+        // Set player names
+        whitePlayer.setName(lines[9]);
+        blackPlayer.setName(lines[10]);
     }
 
     public String exportGame() {
-        // Formato: "WHITE/BLACK,moveCount,peçaposiçao,peçaposiçao,..."
-        // Exemplo: "WHITE,15,Ra1,Nb1,..."
-        StringBuilder gameState = new StringBuilder();
+        StringBuilder export = new StringBuilder();
 
-        // Adicionar o jogador atual
-        gameState.append(currentPlayer.getColor());
-        gameState.append(",");
+        // Export current turn (W for White, B for Black)
+        export.append(currentPlayer.isWhite() ? "W" : "B").append("\n");
 
-        // Adicionar o número de jogadas
-        gameState.append(moveCount);
-        gameState.append(",");
+        // Export board state
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                Piece piece = board.getPieceAt(col, row);
+                if (piece == null) {
+                    export.append(".");
+                } else {
+                    // Uppercase for white pieces, lowercase for black
+                    export.append(piece.toString());
+                }
+            }
+            export.append("\n");
+        }
 
-        // Adicionar o estado do tabuleiro
-        gameState.append(board.toString());
+        // Export player names
+        export.append(whitePlayer.getName()).append("\n");
+        export.append(blackPlayer.getName());
 
-        return gameState.toString();
+        return export.toString();
     }
 
-    public boolean startGame(String player1, String player2) {
-        this.whitePlayer = new Player(true);
-        this.blackPlayer = new Player(false);
-        return true;
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public String getGameStatus() {
+        Board.GameResult result = board.getGameResult();
+        if (isGameOver) {
+            return switch (result) {
+                case WHITE_WINS ->
+                    "Game Over - Checkmate! White wins!";
+                case BLACK_WINS ->
+                    "Game Over - Checkmate! Black wins!";
+                case STALEMATE ->
+                    "Game Over - Draw by stalemate";
+                default ->
+                    "Game Over";
+            };
+        }
+        return switch (result) {
+            case WHITE_WINS ->
+                "Checkmate! White wins!";
+            case BLACK_WINS ->
+                "Checkmate! Black wins!";
+            case STALEMATE ->
+                "Game drawn by stalemate";
+            case IN_PROGRESS -> {
+                if (board.isPlayerInCheck(currentPlayer.isWhite())) {
+                    yield "Check! " + (currentPlayer.isWhite() ? "White" : "Black") + " to move";
+                }
+                yield (currentPlayer.isWhite() ? "White" : "Black") + " to move";
+            }
+        };
     }
 }

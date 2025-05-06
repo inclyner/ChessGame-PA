@@ -26,7 +26,7 @@ public class AskName extends Stage {
     private void createViews() {
         tfName = new TextField();
         tfName.setPrefWidth(200);
-        Label lb = new Label("Name:");
+        Label lb = new Label("Player name:");
         lb.setMinWidth(50);
         HBox fields = new HBox(lb,tfName);
         fields.setAlignment(Pos.BASELINE_LEFT);

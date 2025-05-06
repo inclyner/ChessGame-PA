@@ -4,7 +4,7 @@ import java.util.ArrayList;
 
 public class Bishop extends Piece {
 
-    public Bishop(boolean isWhite,Square position) {
+    public Bishop(boolean isWhite, Square position) {
         super(position, isWhite);
 
     }
@@ -14,38 +14,44 @@ public class Bishop extends Piece {
         ArrayList<Square> moves = new ArrayList<>();
 
         int[][] directions = {
-                {1, 1},   // ↘️
-                {-1, 1},  // ↙️
-                {1, -1},  // ↗️
-                {-1, -1}  // ↖️
+            {1, 1}, // down-right
+            {-1, 1}, // down-left
+            {1, -1}, // up-right
+            {-1, -1} // up-left
         };
 
         for (int[] dir : directions) {
-            int col = this.position.column();
-            int row = this.position.row();
+            int currentCol = this.position.column();
+            int currentRow = this.position.row();
 
             while (true) {
-                col += dir[0];
-                row += dir[1];
+                currentCol += dir[0];
+                currentRow += dir[1];
 
-                if (!board.isWithinBounds(col, row)) break;
+                // Check bounds before accessing board
+                if (!board.isWithinBounds(currentCol, currentRow)) {
+                    break;
+                }
 
-                Piece pieceAtTarget = board.getPieceAt(col, row);
+                try {
+                    Piece pieceAtTarget = board.getPieceAt(currentCol, currentRow);
 
-                if (pieceAtTarget == null) {
-                    moves.add(new Square(col, row));
-                } else {
-                    if (pieceAtTarget.isWhite() != this.isWhite()) {
-                        moves.add(new Square(col, row)); // pode capturar
+                    if (pieceAtTarget == null) {
+                        moves.add(new Square(currentCol, currentRow));
+                    } else {
+                        if (pieceAtTarget.isWhite() != this.isWhite()) {
+                            moves.add(new Square(currentCol, currentRow)); // Can capture
+                        }
+                        break; // Stop this direction if we hit any piece
                     }
-                    break; // não pode passar por cima
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    break; // Stop if we hit array bounds
                 }
             }
         }
 
-        return new ArrayList<>(moves);
+        return moves;
     }
-
 
     @Override
     public String toString() {
@@ -55,6 +61,5 @@ public class Bishop extends Piece {
             return "b";
         }
     }
-
 
 }

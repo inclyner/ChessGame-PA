@@ -3,93 +3,117 @@ package pt.isec.pa.chess.model.data;
 import java.util.ArrayList;
 
 public class King extends Piece {
-    boolean hasMoved = false;
+
+    private boolean hasMoved = false;
+
+    private static final int[][] directions = {
+        {0, 1}, // Up
+        {0, -1}, // Down
+        {1, 0}, // Right
+        {-1, 0}, // Left
+        {1, 1}, // Up-Right
+        {-1, 1}, // Up-Left
+        {1, -1}, // Down-Right
+        {-1, -1} // Down-Left
+    };
 
     public King(boolean isWhite, Square position) {
         super(position, isWhite);
     }
 
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
     @Override
     public ArrayList<Square> getMoves(Board board) {
         ArrayList<Square> moves = new ArrayList<>();
+        int currentCol = this.position.column();
+        int currentRow = this.position.row();
 
-        int[][] directions = {
-                { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 },
-                { 1, 1 }, { -1, 1 }, { 1, -1 }, { -1, -1 }
-        };
-
-        int col = this.position.column();
-        int row = this.position.row();
-
+        // Regular moves
         for (int[] dir : directions) {
-            int targetCol = col + dir[0];
-            int targetRow = row + dir[1];
+            int targetCol = currentCol + dir[0];
+            int targetRow = currentRow + dir[1];
 
-            if (!board.isWithinBounds(targetCol, targetRow))
+            if (!board.isWithinBounds(targetCol, targetRow)) {
                 continue;
+            }
 
-            Piece targetPiece = board.getPieceAt(targetCol, targetRow);
-
-            if (targetPiece == null || targetPiece.isWhite() != this.isWhite()) {
+            Piece pieceAtTarget = board.getPieceAt(targetCol, targetRow);
+            if (pieceAtTarget == null || pieceAtTarget.isWhite() != this.isWhite()) {
                 moves.add(new Square(targetCol, targetRow));
             }
         }
 
-        // castle
-        if (!this.hasMoved) {
-            // Short Castle
-            Piece rookKingside = board.getPieceAt(7, row);
-            if (rookKingside instanceof Rook rook && !rook.hasMoved()) {
-                boolean empty1 = board.getPieceAt(5, row) == null;
-                boolean empty2 = board.getPieceAt(6, row) == null;
-                boolean safe1 = !board.isSquareUnderAttack(new Square(4, row), this.isWhite());
-                boolean safe2 = !board.isSquareUnderAttack(new Square(5, row), this.isWhite());
-                boolean safe3 = !board.isSquareUnderAttack(new Square(6, row), this.isWhite());
-                if (empty1 && empty2 && safe1 && safe2 && safe3) {
-                    moves.add(new Square(6, row));
-                }
+        // Castling moves
+        if (!hasMoved) {
+            // Kingside castling
+            if (canCastleKingside(board)) {
+                moves.add(new Square(currentCol + 2, currentRow));
             }
 
-            // Long Castle
-            Piece rookQueenside = board.getPieceAt(0, row);
-            if (rookQueenside instanceof Rook rook && !rook.hasMoved()) {
-                boolean empty1 = board.getPieceAt(1, row) == null;
-                boolean empty2 = board.getPieceAt(2, row) == null;
-                boolean empty3 = board.getPieceAt(3, row) == null;
-                boolean safe1 = !board.isSquareUnderAttack(new Square(4, row), this.isWhite());
-                boolean safe2 = !board.isSquareUnderAttack(new Square(3, row), this.isWhite());
-                boolean safe3 = !board.isSquareUnderAttack(new Square(2, row), this.isWhite());
-                if (empty1 && empty2 && empty3 && safe1 && safe2 && safe3) {
-                    moves.add(new Square(2, row));
-                }
+            // Queenside castling
+            if (canCastleQueenside(board)) {
+                moves.add(new Square(currentCol - 2, currentRow));
             }
         }
 
         return moves;
     }
 
+    private boolean canCastleKingside(Board board) {
+        int row = this.position.row();
+        int col = this.position.column();
+
+        // Check if rook is present and hasn't moved
+        Piece rook = board.getPieceAt(7, row);
+        if (!(rook instanceof Rook) || ((Rook) rook).hasMoved()) {
+            return false;
+        }
+
+        // Check if squares between king and rook are empty
+        for (int i = col + 1; i < 7; i++) {
+            if (board.getPieceAt(i, row) != null) {
+                return false;
+            }
+        }
+
+        // Check if king is not in check and doesn't pass through check
+        return !board.isSquareUnderAttack(position, isWhite())
+                && !board.isSquareUnderAttack(new Square(col + 1, row), isWhite())
+                && !board.isSquareUnderAttack(new Square(col + 2, row), isWhite());
+    }
+
+    private boolean canCastleQueenside(Board board) {
+        int row = this.position.row();
+        int col = this.position.column();
+
+        // Check if rook is present and hasn't moved
+        Piece rook = board.getPieceAt(0, row);
+        if (!(rook instanceof Rook) || ((Rook) rook).hasMoved()) {
+            return false;
+        }
+
+        // Check if squares between king and rook are empty
+        for (int i = col - 1; i > 0; i--) {
+            if (board.getPieceAt(i, row) != null) {
+                return false;
+            }
+        }
+
+        // Check if king is not in check and doesn't pass through check
+        return !board.isSquareUnderAttack(position, isWhite())
+                && !board.isSquareUnderAttack(new Square(col - 1, row), isWhite())
+                && !board.isSquareUnderAttack(new Square(col - 2, row), isWhite());
+    }
+
+    public void setHasMoved() {
+        this.hasMoved = true;
+    }
+
     @Override
     public String toString() {
-        if (isWhite()) {
-            return "K";
-        } else {
-            return "k";
-        }
+        return isWhite() ? "K" : "k";
     }
-
-    @Override
-    public boolean isKing() {
-        return true;
-    }
-
-    @Override
-    public boolean hasMoved() {
-        return hasMoved;
-    }
-
-    @Override
-    public void setHasMoved() {
-        hasMoved = true;
-    }
-
 }

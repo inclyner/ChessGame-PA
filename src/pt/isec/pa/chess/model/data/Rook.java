@@ -3,10 +3,15 @@ package pt.isec.pa.chess.model.data;
 import java.util.ArrayList;
 
 public class Rook extends Piece {
-    boolean hasMoved = false;
+
+    private boolean hasMoved = false;
 
     public Rook(boolean isWhite, Square position) {
         super(position, isWhite);
+    }
+
+    public boolean hasMoved() {
+        return hasMoved;
     }
 
     @Override
@@ -14,32 +19,38 @@ public class Rook extends Piece {
         ArrayList<Square> moves = new ArrayList<>();
 
         int[][] directions = {
-                { 1, 0 }, { -1, 0 }, { 0, 1 }, { 0, -1 }
+            {0, 1}, // Up
+            {0, -1}, // Down
+            {1, 0}, // Right
+            {-1, 0} // Left
         };
 
-        int col = this.position.column();
-        int row = this.position.row();
-
         for (int[] dir : directions) {
-            int currentCol = col;
-            int currentRow = row;
+            int currentCol = this.position.column();
+            int currentRow = this.position.row();
 
             while (true) {
                 currentCol += dir[0];
                 currentRow += dir[1];
 
-                if (!board.isWithinBounds(currentCol, currentRow))
+                // Check bounds before accessing board
+                if (!board.isWithinBounds(currentCol, currentRow)) {
                     break;
+                }
 
-                Piece targetPiece = board.getPieceAt(currentCol, currentRow);
+                try {
+                    Piece pieceAtTarget = board.getPieceAt(currentCol, currentRow);
 
-                if (targetPiece == null) {
-                    moves.add(new Square(currentCol, currentRow));
-                } else {
-                    if (targetPiece.isWhite() != this.isWhite()) {
+                    if (pieceAtTarget == null) {
                         moves.add(new Square(currentCol, currentRow));
+                    } else {
+                        if (pieceAtTarget.isWhite() != this.isWhite()) {
+                            moves.add(new Square(currentCol, currentRow)); // Can capture
+                        }
+                        break; // Stop this direction if we hit any piece
                     }
-                    break;
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    break; // Stop if we hit array bounds
                 }
             }
         }
@@ -49,21 +60,10 @@ public class Rook extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite()) {
-            return "R";
-        } else {
-            return "r";
-        }
+        return isWhite() ? "R" : "r";
     }
 
-    @Override
-    public boolean hasMoved() {
-        return hasMoved;
-    }
-
-    @Override
     public void setHasMoved() {
-        hasMoved = true;
+        this.hasMoved = true;
     }
-
 }
