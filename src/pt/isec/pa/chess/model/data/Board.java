@@ -3,9 +3,9 @@ package pt.isec.pa.chess.model.data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 
 public class Board implements Serializable {
+
     @Serial
     static final long serialVersionUID = 100L;
     // * column a to h
@@ -56,8 +56,9 @@ public class Board implements Serializable {
         // será chamado com addPiece (Knight,1,1); com o uso de uma factory de peças
         Square sq = new Square(column, row);
         Piece piece = PieceFactoryType.createPiece(type, isWhite, sq);
-        if (board[column][row] != null)
+        if (board[column][row] != null) {
             return false;
+        }
 
         board[column][row] = piece;
         return true;
@@ -65,8 +66,9 @@ public class Board implements Serializable {
 
     public boolean removePiece(int column, int row) {
         // checks if piece can be removed
-        if (board[column][row] != null && board[column][row].isKing())
+        if (board[column][row] != null && board[column][row].isKing()) {
             return false;
+        }
         board[column][row] = null;
         return true;
     }
@@ -83,6 +85,26 @@ public class Board implements Serializable {
         }
         return false;
 
+    }
+
+    public boolean movePiece(Square from, Square to) {
+        Piece piece = getPieceAt(from.column(), from.row());
+        if (piece == null) {
+            return false;
+        }
+
+        // Verify move is valid for this piece
+        ArrayList<Square> validMoves = piece.getMoves(this);
+        if (!validMoves.contains(to)) {
+            return false;
+        }
+
+        // Make the move
+        board[to.column()][to.row()] = piece;
+        board[from.column()][from.row()] = null;
+        piece.setPosition(to);  // Update piece's position
+
+        return true;
     }
 
     public boolean checkMove(Piece piece, int column, int row, boolean isWhitePlaying) {
@@ -126,13 +148,14 @@ public class Board implements Serializable {
     @Override
     public String toString() {
         StringBuffer buffer = new StringBuffer(); // thread safe for multiple games
-        char[][] positions = { { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }, { '8', '7', '6', '5', '4', '3', '2', '1' } };
+        char[][] positions = {{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, {'8', '7', '6', '5', '4', '3', '2', '1'}};
         for (int column = 0; column <= BOARD_SIZE - 1; column++) {
             for (int row = 0; row <= BOARD_SIZE - 1; row++) {
                 if (board[column][row] != null) {
                     buffer.append(board[column][row].toString()).append(positions[column][row]);
-                    if (!board[column][row].hasMoved())
+                    if (!board[column][row].hasMoved()) {
                         buffer.append("*");
+                    }
                 }
             }
         }
@@ -141,7 +164,7 @@ public class Board implements Serializable {
 
     public void importGame(String boardString) {
         String[] splitboard = boardString.split(",");
-        char[][] positions = { { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h' }, { '8', '7', '6', '5', '4', '3', '2', '1' } };
+        char[][] positions = {{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, {'8', '7', '6', '5', '4', '3', '2', '1'}};
 
         for (String piece : splitboard) {
             char pieceChar = piece.charAt(0);
@@ -151,18 +174,46 @@ public class Board implements Serializable {
             int rowIndex = 8 - Character.getNumericValue(rowChar); // linha 8 → índice 0
             Square position = new Square(columnIndex, rowIndex);
             Piece p = PieceFactoryTxt.createPiece(pieceChar, position);
-            if ((pieceChar == 'r' || pieceChar == 'R' || pieceChar == 'k' || pieceChar == 'K') && piece.length() != 4)
+            if ((pieceChar == 'r' || pieceChar == 'R' || pieceChar == 'k' || pieceChar == 'K') && piece.length() != 4) {
                 p.setHasMoved();
+            }
 
             board[columnIndex][rowIndex] = p;
         }
     }
 
+    public void setPieceFromChar(int col, int row, char pieceChar) {
+        boolean isWhite = Character.isUpperCase(pieceChar);
+        char type = Character.toUpperCase(pieceChar);
+
+        Piece piece = switch (type) {
+            case 'P' ->
+                new Pawn(isWhite, new Square(col, row));
+            case 'R' ->
+                new Rook(isWhite, new Square(col, row));
+            case 'N' ->
+                new Knight(isWhite, new Square(col, row));
+            case 'B' ->
+                new Bishop(isWhite, new Square(col, row));
+            case 'Q' ->
+                new Queen(isWhite, new Square(col, row));
+            case 'K' ->
+                new King(isWhite, new Square(col, row));
+            default ->
+                throw new IllegalArgumentException("Invalid piece character: " + pieceChar);
+        };
+
+        board[col][row] = piece;
+    }
+
     public boolean isWithinBounds(int col, int row) {
-        return col < BOARD_SIZE && row < BOARD_SIZE;
+        return col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE;
     }
 
     public Piece getPieceAt(int col, int row) {
+        if (!isWithinBounds(col, row)) {
+            return null;
+        }
         return board[col][row];
     }
 
@@ -220,10 +271,41 @@ public class Board implements Serializable {
         throw new IllegalStateException("King not found on the board for the player.");
     }
 
+    public boolean isKingInCheck(boolean isWhite) {
+        // Find the king's position
+        Square kingPosition = null;
+        for (int col = 0; col < 8; col++) {
+            for (int row = 0; row < 8; row++) {
+                Piece piece = getPieceAt(col, row);
+                if (piece instanceof King && piece.isWhite() == isWhite) {
+                    kingPosition = new Square(col, row);
+                    break;
+                }
+            }
+            if (kingPosition != null) {
+                break;
+            }
+        }
+
+        if (kingPosition == null) {
+            return false;
+        }
+
+        // Check if any opponent's piece can attack the king's position
+        return isSquareUnderAttack(kingPosition, isWhite);
+    }
+
     public boolean isSquareUnderAttack(Square square, boolean isWhite) {
-        for (Piece piece : getAllPieces()) {
-            if (piece.isWhite() != isWhite && piece.getMoves(this).contains(square)) {
-                return true;
+        // Check if any opponent's piece can move to this square
+        for (int col = 0; col < 8; col++) {
+            for (int row = 0; row < 8; row++) {
+                Piece piece = getPieceAt(col, row);
+                if (piece != null && piece.isWhite() != isWhite) {
+                    ArrayList<Square> moves = piece.getMoves(this);
+                    if (moves.contains(square)) {
+                        return true;
+                    }
+                }
             }
         }
         return false;

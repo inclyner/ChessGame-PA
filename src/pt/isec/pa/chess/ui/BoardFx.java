@@ -158,6 +158,14 @@ public class BoardFx extends Canvas {
                 }
             }
         }
+
+        // Add turn indicator
+        boolean isWhiteTurn = gameManager.getGame().getCurrentPlayer().isWhite();
+        gc.setFill(isWhiteTurn ? PIECE_WHITE : PIECE_BLACK);
+        gc.setStroke(Color.BLACK);
+        gc.setLineWidth(2);
+        gc.strokeText(isWhiteTurn ? "White's turn" : "Black's turn", 10, getHeight() - 10);
+        gc.fillText(isWhiteTurn ? "White's turn" : "Black's turn", 10, getHeight() - 10);
     }
 
     private void drawPiece(GraphicsContext gc, Piece piece, int col, int row, double cellSize) {

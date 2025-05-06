@@ -3,6 +3,7 @@ package pt.isec.pa.chess.model.data;
 import java.util.ArrayList;
 
 public class Queen extends Piece {
+
     public Queen(boolean isWhite, Square position) {
         super(position, isWhite);
     }
@@ -12,35 +13,42 @@ public class Queen extends Piece {
         ArrayList<Square> moves = new ArrayList<>();
 
         int[][] directions = {
-                {1, 0}, {-1, 0}, {0, 1}, {0, -1},
-                {1, 1}, {-1, 1}, {1, -1}, {-1, -1}
+            {0, 1}, // Up
+            {0, -1}, // Down
+            {1, 0}, // Right
+            {-1, 0}, // Left
+            {1, 1}, // Up-Right
+            {-1, 1}, // Up-Left
+            {1, -1}, // Down-Right
+            {-1, -1} // Down-Left
         };
 
-        int col = this.position.column();
-        int row = this.position.row();
-
         for (int[] dir : directions) {
-            int currentCol = col;
-            int currentRow = row;
+            int currentCol = this.position.column();
+            int currentRow = this.position.row();
 
             while (true) {
                 currentCol += dir[0];
                 currentRow += dir[1];
 
-                // Validate the coordinates before calling getPieceAt
+                // Check bounds before accessing board
                 if (!board.isWithinBounds(currentCol, currentRow)) {
                     break;
                 }
 
-                Piece targetPiece = board.getPieceAt(currentCol, currentRow);
+                try {
+                    Piece pieceAtTarget = board.getPieceAt(currentCol, currentRow);
 
-                if (targetPiece == null) {
-                    moves.add(new Square(currentCol, currentRow));
-                } else {
-                    if (targetPiece.isWhite() != this.isWhite()) {
+                    if (pieceAtTarget == null) {
                         moves.add(new Square(currentCol, currentRow));
+                    } else {
+                        if (pieceAtTarget.isWhite() != this.isWhite()) {
+                            moves.add(new Square(currentCol, currentRow)); // Can capture
+                        }
+                        break; // Stop this direction if we hit any piece
                     }
-                    break;
+                } catch (ArrayIndexOutOfBoundsException e) {
+                    break; // Stop if we hit array bounds
                 }
             }
         }
@@ -50,10 +58,6 @@ public class Queen extends Piece {
 
     @Override
     public String toString() {
-        if (isWhite()) {
-            return "Q";
-        } else {
-            return "q";
-        }
+        return isWhite() ? "Q" : "q";
     }
 }
