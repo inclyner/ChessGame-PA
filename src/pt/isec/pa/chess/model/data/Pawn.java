@@ -3,6 +3,7 @@ package pt.isec.pa.chess.model.data;
 import java.util.ArrayList;
 
 public class Pawn extends Piece {
+
     boolean hasMoved = false;
     private boolean needsPromotion = false;
 
@@ -30,10 +31,11 @@ public class Pawn extends Piece {
             }
         }
 
-        int[] diagonalCols = { col - 1, col + 1 };
+        int[] diagonalCols = {col - 1, col + 1};
         for (int diagCol : diagonalCols) {
-            if (!board.isWithinBounds(diagCol, oneStepRow))
+            if (!board.isWithinBounds(diagCol, oneStepRow)) {
                 continue;
+            }
 
             // Regular diagonal capture
             Piece target = board.getPieceAt(diagCol, oneStepRow);
@@ -49,9 +51,9 @@ public class Pawn extends Piece {
                         Square lastMoveFrom = board.getLastMoveFrom();
                         Square lastMoveTo = board.getLastMoveTo();
 
-                        if (lastMoveFrom != null && lastMoveTo != null &&
-                                lastMoveFrom.equals(new Square(diagCol, row + (this.isWhite() ? -2 : 2))) &&
-                                lastMoveTo.equals(new Square(diagCol, row))) {
+                        if (lastMoveFrom != null && lastMoveTo != null
+                                && lastMoveFrom.equals(new Square(diagCol, row + (this.isWhite() ? -2 : 2)))
+                                && lastMoveTo.equals(new Square(diagCol, row))) {
                             moves.add(new Square(diagCol, oneStepRow));
                         }
                     }
@@ -66,26 +68,18 @@ public class Pawn extends Piece {
      * Checks if the pawn needs promotion (has reached the opposite end)
      */
     public boolean needsPromotion() {
-        int row = this.position.row();
-        return (isWhite() && row == 7) || (!isWhite() && row == 0);
+        return (isWhite() && position.row() == 7) || (!isWhite() && position.row() == 0);
     }
 
     public Piece promote(Board board, PieceType type) {
-        if (!needsPromotion()) {
-            return this;
-        }
-
-        // Tipos de peças válidos para promoção
-        if (type != PieceType.QUEEN && type != PieceType.ROOK &&
-                type != PieceType.BISHOP && type != PieceType.KNIGHT) {
-            return this;
-        }
-
-        // Cria uma nova peça
-        Piece promotedPiece = PieceFactoryType.createPiece(type, this.isWhite(), this.position);
-        promotedPiece.setHasMoved(); // Marca a peça como movida, para normalizar
-
-        return promotedPiece;
+        return switch (type) {
+            case QUEEN ->
+                new Queen(isWhite(), position);
+            case KNIGHT ->
+                new Knight(isWhite(), position);
+            default ->
+                new Queen(isWhite(), position); // Fallback to Queen
+        };
     }
 
     @Override

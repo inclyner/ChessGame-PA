@@ -3,8 +3,11 @@ package pt.isec.pa.chess.model.data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+import pt.isec.pa.chess.ui.PromotionHandler;
 
 public class Board implements Serializable {
+
+    private PromotionHandler promotionHandler;
 
     @Serial
     static final long serialVersionUID = 100L;
@@ -103,6 +106,23 @@ public class Board implements Serializable {
         board[to.column()][to.row()] = piece;
         board[from.column()][from.row()] = null;
         piece.setPosition(to);  // Update piece's position
+        piece.setHasMoved();    // Mark piece as moved
+
+        // Check for pawn promotion
+        if (piece instanceof Pawn && ((Pawn) piece).needsPromotion()) {
+            if (promotionHandler != null) {
+                PieceType promotionChoice = promotionHandler.getPromotionChoice();
+                Piece promotedPiece = ((Pawn) piece).promote(this, promotionChoice);
+                board[to.column()][to.row()] = promotedPiece;
+            } else {
+                // Default to Queen if no handler is set
+                Piece promotedPiece = ((Pawn) piece).promote(this, PieceType.QUEEN);
+                board[to.column()][to.row()] = promotedPiece;
+            }
+        }
+
+        lastMoveFrom = from;
+        lastMoveTo = to;
 
         return true;
     }
@@ -329,5 +349,9 @@ public class Board implements Serializable {
 
     public Square getLastMoveTo() {
         return lastMoveTo;
+    }
+
+    public void setPromotionHandler(PromotionHandler handler) {
+        this.promotionHandler = handler;
     }
 }

@@ -3,13 +3,17 @@ package pt.isec.pa.chess.model;
 import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Square;
+import pt.isec.pa.chess.ui.PromotionHandler;
 
 public class ChessGameManager {
 
     private ChessGame game;
+    private PromotionHandler promotionHandler;
 
-    public ChessGameManager(ChessGame game) {
+    public ChessGameManager(ChessGame game, PromotionHandler handler) {
         this.game = game;
+        this.promotionHandler = handler;
+        this.game.getBoard().setPromotionHandler(handler);
     }
 
     public boolean startGame(String player1, String player2) {

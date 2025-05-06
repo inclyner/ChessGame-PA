@@ -2,17 +2,20 @@ package pt.isec.pa.chess.ui;
 
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 import pt.isec.pa.chess.model.ChessGameManager;
 import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Piece;
+import pt.isec.pa.chess.model.data.PieceType;
 import pt.isec.pa.chess.model.data.Player;
 import pt.isec.pa.chess.model.data.Square;
 
 import java.util.ArrayList;
+import java.util.Optional;
 
-public class BoardFx extends Canvas {
+public class BoardFx extends Canvas implements PromotionHandler {
 
     private ChessGameManager gameManager;
     private final Color LIGHT_SQUARE = Color.web("#f0d9b5");
@@ -203,5 +206,18 @@ public class BoardFx extends Canvas {
             default ->
                 "?";
         };
+    }
+
+    @Override
+    public PieceType getPromotionChoice() {
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", "Queen", "Knight");
+        dialog.setTitle("Pawn Promotion");
+        dialog.setHeaderText("Choose piece for pawn promotion");
+        dialog.setContentText("Select piece:");
+
+        Optional<String> result = dialog.showAndWait();
+        return result.map(choice
+                -> choice.equals("Queen") ? PieceType.QUEEN : PieceType.KNIGHT
+        ).orElse(PieceType.QUEEN);
     }
 }
