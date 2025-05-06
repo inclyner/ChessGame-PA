@@ -62,6 +62,16 @@ public class ChessGame implements Serializable {
 
             moveCount++;
             switchPlayer();
+
+            // Lógica de promoção de peão
+            if (piece instanceof Pawn pawn && pawn.needsPromotion()) {
+                // O jogador decide
+                PieceType promotionType = PieceType.QUEEN; // Default to queen
+
+                Piece promotedPiece = pawn.promote(board, promotionType);
+                board[to.column()][to.row()] = promotedPiece;
+            }
+
             return true;
         }
 
