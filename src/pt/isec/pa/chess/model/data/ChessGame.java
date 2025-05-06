@@ -5,6 +5,7 @@ import java.io.Serializable;
 
 //Facade
 public class ChessGame implements Serializable {
+
     @Serial
     static final long serialVersionUID = 100L;
 
@@ -15,6 +16,7 @@ public class ChessGame implements Serializable {
     private int moveCount;
     private Square lastMoveFrom;
     private Square lastMoveTo;
+
     public Board getBoard() {
         return board;
     }
@@ -131,15 +133,18 @@ public class ChessGame implements Serializable {
         this.currentPlayer = whitePlayer;
 
         this.moveCount = 0;
-        
+
         // Cria board
         this.board = new Board();
-        
+
         // Reinicia o tracker de movimentos
         this.lastMoveFrom = null;
         this.lastMoveTo = null;
-        
+
         return true;
     }
-}
 
+    public Player getCurrentPlayer() {
+        return currentPlayer;
+    }
+}
