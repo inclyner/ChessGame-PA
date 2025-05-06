@@ -12,7 +12,7 @@ public class MainJFX extends Application {
     public void start(Stage stage) throws Exception {
         RootPane root = new RootPane(data);
 
-        Scene scene = new Scene(root,600,400);
+        Scene scene = new Scene(root,800,600);
         stage.setScene(scene);
         stage.setTitle("ChessGame");
 

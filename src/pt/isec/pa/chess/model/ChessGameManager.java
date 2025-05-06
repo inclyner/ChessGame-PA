@@ -28,4 +28,7 @@ public class ChessGameManager {
     }
 
 
+    public String getPieceAt(int row, int col) {
+        return null;
+    }
 }

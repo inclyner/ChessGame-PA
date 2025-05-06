@@ -15,10 +15,11 @@ import java.io.File;
 public class RootPane extends BorderPane { //View-Controller
     ModelData data;
     MenuBar menuBar;
-    MenuItem miNew, miOpen, miSave, miImport, miExport, miQuit;
+    MenuItem miNew, miOpen, miSave, miImport, miExport,miShowMoves, miQuit,miUndo,miRedo;
+    RadioMenuItem miNormal, miLearning;
     ChessGameManager gameManager;
-
-
+    Canvas canvas;
+    Pane center;
     // variables, including reference to views
     public RootPane(ModelData data) {
         this.data = data;
@@ -30,11 +31,33 @@ public class RootPane extends BorderPane { //View-Controller
 
     private void createViews() {
         setTop(createMenu());
+        center = new Pane();
+        setCenter(center);
+        canvas = new BoardFx(gameManager);
+        center.getChildren().add(canvas);
 
 
     }
 
     private void registerHandlers() {
+
+        center.widthProperty().addListener(
+                (_,_,_) ->{
+                    canvas.setWidth(center.getWidth());
+                    canvas.setHeight(center.getHeight());
+                    update();
+                }
+        );
+        center.heightProperty().addListener(
+                (_,_,_) ->{
+                    canvas.setWidth(center.getWidth());
+                    canvas.setHeight(center.getHeight());
+                    update();
+                }
+        );
+
+
+
         miNew.setOnAction(actionEvent -> {
             AskName askName = new AskName(data);
             askName.showAndWait();
@@ -85,9 +108,31 @@ public class RootPane extends BorderPane { //View-Controller
             Platform.exit();
         });
 
+        miNormal.setOnAction(e -> {
+            miUndo.setDisable(true);
+            miRedo.setDisable(true);
+            miShowMoves.setDisable(true);
+
+        });
+
+        miLearning.setOnAction(e -> {
+            miUndo.setDisable(false);
+            miRedo.setDisable(false);
+            miShowMoves.setDisable(false);
+        });
+
     }
 
-    private void update() { /* update views */ }
+    private void update() {
+        GraphicsContext gc = canvas.getGraphicsContext2D();
+        //gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        gc.setFill(Color.web("#312e2b"));
+        gc.fillRect(0,0,canvas.getWidth(),canvas.getHeight());
+
+
+
+
+    }
 
 
 
@@ -105,19 +150,21 @@ public class RootPane extends BorderPane { //View-Controller
         menuGame.getItems().addAll(miNew, miOpen, miSave, new SeparatorMenuItem(), miImport, miExport, new SeparatorMenuItem(), miQuit);
 
         Menu menuMode = new Menu("Mode");
-        RadioMenuItem miNormal = new RadioMenuItem("Normal");
-        RadioMenuItem miLearning = new RadioMenuItem("Learning");
+        miNormal = new RadioMenuItem("Normal");
+        miLearning = new RadioMenuItem("Learning");
 
         ToggleGroup toggleMode = new ToggleGroup();
         miNormal.setToggleGroup(toggleMode);
         miLearning.setToggleGroup(toggleMode);
         miNormal.setSelected(true); // default
 
-        CheckMenuItem miShowMoves = new CheckMenuItem("Show possible moves");
-        MenuItem miUndo = new MenuItem("Undo");
-        MenuItem miRedo = new MenuItem("Redo");
+        miShowMoves = new MenuItem("Show possible moves");
+        miUndo = new MenuItem("Undo");
+        miRedo = new MenuItem("Redo");
+        miShowMoves.setDisable(true);
         miUndo.setDisable(true);
         miRedo.setDisable(true);
+
 
         menuMode.getItems().addAll(miNormal, miLearning, new SeparatorMenuItem(), miShowMoves, miUndo, miRedo);
 
