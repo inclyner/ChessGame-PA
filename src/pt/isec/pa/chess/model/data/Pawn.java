@@ -14,49 +14,48 @@ public class Pawn extends Piece {
     @Override
     public ArrayList<Square> getMoves(Board board) {
         ArrayList<Square> moves = new ArrayList<>();
+        int currentCol = position.column();
+        int currentRow = position.row();
+        int direction = isWhite() ? 1 : -1;
 
-        int col = this.position.column();
-        int row = this.position.row();
+        // Forward moves
+        if (board.isWithinBounds(currentCol, currentRow + direction)) {
+            if (board.getPieceAt(currentCol, currentRow + direction) == null) {
+                moves.add(new Square(currentCol, currentRow + direction));
 
-        int direction = this.isWhite() ? 1 : -1;
-        int oneStepRow = row + direction;
-
-        if (board.isWithinBounds(col, oneStepRow) && board.getPieceAt(col, oneStepRow) == null) {
-            moves.add(new Square(col, oneStepRow));
-
-            int twoStepRow = row + 2 * direction;
-            if (!this.hasMoved && board.isWithinBounds(col, twoStepRow)
-                    && board.getPieceAt(col, twoStepRow) == null) {
-                moves.add(new Square(col, twoStepRow));
+                // Two-square first move
+                if (!hasMoved && board.isWithinBounds(currentCol, currentRow + 2 * direction)
+                        && board.getPieceAt(currentCol, currentRow + 2 * direction) == null) {
+                    moves.add(new Square(currentCol, currentRow + 2 * direction));
+                }
             }
         }
 
-        int[] diagonalCols = {col - 1, col + 1};
-        for (int diagCol : diagonalCols) {
-            if (!board.isWithinBounds(diagCol, oneStepRow)) {
-                continue;
+        // Diagonal captures only if there's an enemy piece
+        int[] captureColumns = {currentCol - 1, currentCol + 1};
+        for (int col : captureColumns) {
+            if (board.isWithinBounds(col, currentRow + direction)) {
+                Piece target = board.getPieceAt(col, currentRow + direction);
+                // Only add diagonal move if there's an enemy piece to capture
+                if (target != null && target.isWhite() != isWhite()) {
+                    moves.add(new Square(col, currentRow + direction));
+                }
             }
+        }
 
-            // Regular diagonal capture
-            Piece target = board.getPieceAt(diagCol, oneStepRow);
-            if (target != null && target.isWhite() != this.isWhite()) {
-                moves.add(new Square(diagCol, oneStepRow));
-            }
+        // En passant (only when conditions are met)
+        if ((isWhite() && currentRow == 4) || (!isWhite() && currentRow == 3)) {
+            Square lastMoveTo = board.getLastMoveTo();
+            Piece lastMoved = board.getLastMovedPiece();
 
-            // En passant capture
-            if (board.isWithinBounds(diagCol, row)) {
-                if ((isWhite() && row == 4) || (!isWhite() && row == 3)) {
-                    Piece adjacentPawn = board.getPieceAt(diagCol, row);
-                    if (adjacentPawn instanceof Pawn && adjacentPawn.isWhite() != this.isWhite()) {
-                        Square lastMoveFrom = board.getLastMoveFrom();
-                        Square lastMoveTo = board.getLastMoveTo();
+            if (lastMoveTo != null && lastMoved instanceof Pawn) {
+                int lastMoveCol = lastMoveTo.column();
 
-                        if (lastMoveFrom != null && lastMoveTo != null
-                                && lastMoveFrom.equals(new Square(diagCol, row + (this.isWhite() ? -2 : 2)))
-                                && lastMoveTo.equals(new Square(diagCol, row))) {
-                            moves.add(new Square(diagCol, oneStepRow));
-                        }
-                    }
+                // Check if last move was a two-square pawn advance next to this pawn
+                if (Math.abs(lastMoveCol - currentCol) == 1
+                        && lastMoveTo.row() == currentRow
+                        && board.getLastMoveFrom().row() == (isWhite() ? 6 : 1)) {
+                    moves.add(new Square(lastMoveCol, currentRow + direction));
                 }
             }
         }

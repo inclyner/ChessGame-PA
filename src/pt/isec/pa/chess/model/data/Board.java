@@ -18,6 +18,7 @@ public class Board implements Serializable {
     private Piece[][] board = new Piece[BOARD_SIZE][BOARD_SIZE];
     private Square lastMoveFrom;
     private Square lastMoveTo;
+    private Piece lastMovedPiece;  // Add this field
 
     public Board() {
         this.setupBoard();
@@ -96,33 +97,53 @@ public class Board implements Serializable {
             return false;
         }
 
-        // Verify move is valid for this piece
+        // Get valid moves and verify if the target square is among them
         ArrayList<Square> validMoves = piece.getMoves(this);
         if (!validMoves.contains(to)) {
+            return false;  // Invalid move
+        }
+
+        // Save current state
+        Square originalPosition = piece.getPosition();
+        Piece targetPiece = getPieceAt(to.column(), to.row());
+
+        // Make the move temporarily
+        board[to.column()][to.row()] = piece;
+        board[from.column()][from.row()] = null;
+        piece.setPosition(to);
+
+        // Check if move leaves or keeps own king in check
+        boolean causesCheck = isPlayerInCheck(piece.isWhite());
+
+        // If move causes/leaves check, undo it and return false
+        if (causesCheck) {
+            // Undo move
+            board[from.column()][from.row()] = piece;
+            board[to.column()][to.row()] = targetPiece;
+            piece.setPosition(originalPosition);
             return false;
         }
 
-        // Make the move
-        board[to.column()][to.row()] = piece;
-        board[from.column()][from.row()] = null;
-        piece.setPosition(to);  // Update piece's position
-        piece.setHasMoved();    // Mark piece as moved
+        // Handle castling
+        if (piece instanceof King && Math.abs(to.column() - from.column()) == 2) {
+            boolean isKingsideCastle = to.column() > from.column();
+            int rookFromCol = isKingsideCastle ? 7 : 0;
+            int rookToCol = isKingsideCastle ? 5 : 3;
 
-        // Check for pawn promotion
-        if (piece instanceof Pawn && ((Pawn) piece).needsPromotion()) {
-            if (promotionHandler != null) {
-                PieceType promotionChoice = promotionHandler.getPromotionChoice();
-                Piece promotedPiece = ((Pawn) piece).promote(this, promotionChoice);
-                board[to.column()][to.row()] = promotedPiece;
-            } else {
-                // Default to Queen if no handler is set
-                Piece promotedPiece = ((Pawn) piece).promote(this, PieceType.QUEEN);
-                board[to.column()][to.row()] = promotedPiece;
+            Piece rook = getPieceAt(rookFromCol, from.row());
+            if (rook instanceof Rook) {
+                board[rookToCol][from.row()] = rook;
+                board[rookFromCol][from.row()] = null;
+                rook.setPosition(new Square(rookToCol, from.row()));
+                rook.setHasMoved();
             }
         }
 
+        // Store last move info
         lastMoveFrom = from;
         lastMoveTo = to;
+        lastMovedPiece = piece;
+        piece.setHasMoved();
 
         return true;
     }
@@ -237,25 +258,25 @@ public class Board implements Serializable {
         return board[col][row];
     }
 
-    private boolean isPlayerInCheck(boolean isWhite) {
+    public boolean isPlayerInCheck(boolean isWhite) {
         Square kingPosition = findKingPosition(isWhite);
+        if (kingPosition == null) {
+            return false;
+        }
 
         // Check if any opponent piece can attack the king
         for (int col = 0; col < BOARD_SIZE; col++) {
             for (int row = 0; row < BOARD_SIZE; row++) {
-                Piece opponentPiece = board[col][row];
+                Piece opponentPiece = getPieceAt(col, row);
                 if (opponentPiece != null && opponentPiece.isWhite() != isWhite) {
-                    ArrayList<Square> opponentMoves = opponentPiece.getMoves(this);
-                    for (Square move : opponentMoves) {
-                        if (move.equals(kingPosition)) {
-                            return true; // King is under attack
-                        }
+                    ArrayList<Square> moves = opponentPiece.getMoves(this);
+                    if (moves.contains(kingPosition)) {
+                        return true;
                     }
                 }
             }
         }
-
-        return false; // King is safe
+        return false;
     }
 
     private boolean wouldCauseSelfCheck(Piece piece, int targetColumn, int targetRow) {
@@ -282,13 +303,13 @@ public class Board implements Serializable {
     private Square findKingPosition(boolean isWhite) {
         for (int col = 0; col < BOARD_SIZE; col++) {
             for (int row = 0; row < BOARD_SIZE; row++) {
-                Piece piece = board[col][row];
-                if (piece != null && piece.isKing() && piece.isWhite() == isWhite) {
-                    return new Square(col, row); // Retorna a posiçao
+                Piece piece = getPieceAt(col, row);
+                if (piece instanceof King && piece.isWhite() == isWhite) {
+                    return new Square(col, row);
                 }
             }
         }
-        throw new IllegalStateException("King not found on the board for the player.");
+        return null;
     }
 
     public boolean isKingInCheck(boolean isWhite) {
@@ -351,7 +372,78 @@ public class Board implements Serializable {
         return lastMoveTo;
     }
 
+    public Piece getLastMovedPiece() {
+        return lastMovedPiece;
+    }
+
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
+    }
+
+    public enum GameResult {
+        IN_PROGRESS,
+        WHITE_WINS,
+        BLACK_WINS,
+        STALEMATE
+    }
+
+    public GameResult getGameResult() {
+        boolean whiteInCheck = isPlayerInCheck(true);
+        boolean blackInCheck = isPlayerInCheck(false);
+
+        // Check if any player has legal moves
+        boolean whiteHasMoves = hasLegalMoves(true);
+        boolean blackHasMoves = hasLegalMoves(false);
+
+        if (whiteInCheck && !whiteHasMoves) {
+            return GameResult.BLACK_WINS;
+        }
+        if (blackInCheck && !blackHasMoves) {
+            return GameResult.WHITE_WINS;
+        }
+        if (!whiteHasMoves || !blackHasMoves) {
+            return GameResult.STALEMATE;
+        }
+
+        return GameResult.IN_PROGRESS;
+    }
+
+    private boolean hasLegalMoves(boolean isWhite) {
+        // Get all pieces of the current player
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                Piece piece = getPieceAt(col, row);
+                if (piece != null && piece.isWhite() == isWhite) {
+                    // Get all possible moves for this piece
+                    ArrayList<Square> moves = piece.getMoves(this);
+
+                    // Try each move to see if it's legal
+                    for (Square move : moves) {
+                        // Save current state
+                        Square originalPosition = piece.getPosition();
+                        Piece targetPiece = getPieceAt(move.column(), move.row());
+
+                        // Try move
+                        board[move.column()][move.row()] = piece;
+                        board[originalPosition.column()][originalPosition.row()] = null;
+                        piece.setPosition(move);
+
+                        // Check if move is legal (doesn't leave king in check)
+                        boolean causesCheck = isPlayerInCheck(isWhite);
+
+                        // Restore position
+                        board[originalPosition.column()][originalPosition.row()] = piece;
+                        board[move.column()][move.row()] = targetPiece;
+                        piece.setPosition(originalPosition);
+
+                        // If we found a legal move, return true
+                        if (!causesCheck) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 }

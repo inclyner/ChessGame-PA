@@ -9,6 +9,7 @@ public class ChessGame implements Serializable {
     private Player currentPlayer;
     private final Player whitePlayer;
     private final Player blackPlayer;
+    private boolean isGameOver = false;
 
     public ChessGame() {
         board = new Board();
@@ -24,6 +25,10 @@ public class ChessGame implements Serializable {
     }
 
     public boolean move(Square from, Square to) {
+        if (isGameOver) {
+            return false; // Cannot make moves after game is over
+        }
+
         Piece piece = board.getPieceAt(from.column(), from.row());
 
         // Verify it's the correct player's turn
@@ -31,12 +36,31 @@ public class ChessGame implements Serializable {
             return false;
         }
 
-        // Try to make the move
-        if (board.movePiece(from, to)) {
-            switchTurn();
+        // Check if player is in check and this move doesn't resolve it
+        if (board.isPlayerInCheck(currentPlayer.isWhite())) {
+            // Try the move - if it doesn't resolve check, it's invalid
+            if (!board.movePiece(from, to)) {
+                return false;
+            }
+        } else {
+            // Normal move when not in check
+            if (!board.movePiece(from, to)) {
+                return false;
+            }
+        }
+
+        // Move was successful, switch turns first
+        switchTurn();
+
+        // Check if this move ended the game
+        Board.GameResult result = board.getGameResult();
+        if (result != Board.GameResult.IN_PROGRESS) {
+            isGameOver = true;
+            // Don't switch turns if game is over
             return true;
         }
-        return false;
+
+        return true;
     }
 
     private void switchTurn() {
@@ -102,5 +126,39 @@ public class ChessGame implements Serializable {
         export.append(blackPlayer.getName());
 
         return export.toString();
+    }
+
+    public boolean isGameOver() {
+        return isGameOver;
+    }
+
+    public String getGameStatus() {
+        Board.GameResult result = board.getGameResult();
+        if (isGameOver) {
+            return switch (result) {
+                case WHITE_WINS ->
+                    "Game Over - Checkmate! White wins!";
+                case BLACK_WINS ->
+                    "Game Over - Checkmate! Black wins!";
+                case STALEMATE ->
+                    "Game Over - Draw by stalemate";
+                default ->
+                    "Game Over";
+            };
+        }
+        return switch (result) {
+            case WHITE_WINS ->
+                "Checkmate! White wins!";
+            case BLACK_WINS ->
+                "Checkmate! Black wins!";
+            case STALEMATE ->
+                "Game drawn by stalemate";
+            case IN_PROGRESS -> {
+                if (board.isPlayerInCheck(currentPlayer.isWhite())) {
+                    yield "Check! " + (currentPlayer.isWhite() ? "White" : "Black") + " to move";
+                }
+                yield (currentPlayer.isWhite() ? "White" : "Black") + " to move";
+            }
+        };
     }
 }
