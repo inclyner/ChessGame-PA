@@ -33,38 +33,24 @@ public class RootPane extends BorderPane { //View-Controller
         setTop(createMenu());
         center = new Pane();
         setCenter(center);
+        
         canvas = new BoardFx(gameManager);
         center.getChildren().add(canvas);
-
-
+        
+        // Just use bindings, don't set the size directly
+        canvas.widthProperty().bind(center.widthProperty());
+        canvas.heightProperty().bind(center.heightProperty());
     }
 
     private void registerHandlers() {
-
-        center.widthProperty().addListener(
-                (_,_,_) ->{
-                    canvas.setWidth(center.getWidth());
-                    canvas.setHeight(center.getHeight());
-                    update();
-                }
-        );
-        center.heightProperty().addListener(
-                (_,_,_) ->{
-                    canvas.setWidth(center.getWidth());
-                    canvas.setHeight(center.getHeight());
-                    update();
-                }
-        );
-
-
 
         miNew.setOnAction(actionEvent -> {
             AskName askName = new AskName(data);
             askName.showAndWait();
             AskName askName2 = new AskName(data);
-            askName.showAndWait();
+            askName2.showAndWait();  // Fixed
             gameManager.startGame(askName.tfName.getText(), askName2.tfName.getText());
-
+            update(); // dá refresh na tela
         });
 
         miOpen.setOnAction(e -> {
@@ -124,14 +110,7 @@ public class RootPane extends BorderPane { //View-Controller
     }
 
     private void update() {
-        GraphicsContext gc = canvas.getGraphicsContext2D();
-        //gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        gc.setFill(Color.web("#312e2b"));
-        gc.fillRect(0,0,canvas.getWidth(),canvas.getHeight());
-
-
-
-
+        ((BoardFx)canvas).draw();
     }
 
 

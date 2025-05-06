@@ -2,6 +2,7 @@ package pt.isec.pa.chess.model;
 
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Square;
+import pt.isec.pa.chess.model.data.Board;
 
 public class ChessGameManager {
 
@@ -31,4 +32,9 @@ public class ChessGameManager {
     public String getPieceAt(int row, int col) {
         return null;
     }
+
+    public Board getBoard() {
+        return game.getBoard();
+    }
+
 }

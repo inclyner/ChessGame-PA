@@ -40,7 +40,7 @@ public class Piece implements Serializable {
     }
 
     public boolean isKing() {
-        return false; // Override in King class
+        return false; // Override na class King
     }
 
     public ArrayList<Square> getMoves(Board board) {

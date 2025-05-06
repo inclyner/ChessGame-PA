@@ -15,6 +15,9 @@ public class ChessGame implements Serializable {
     private int moveCount;
     private Square lastMoveFrom;
     private Square lastMoveTo;
+    public Board getBoard() {
+        return board;
+    }
 
     public ChessGame() {
         this.board = new Board();
@@ -69,7 +72,8 @@ public class ChessGame implements Serializable {
                 PieceType promotionType = PieceType.QUEEN; // Default to queen
 
                 Piece promotedPiece = pawn.promote(board, promotionType);
-                board[to.column()][to.row()] = promotedPiece;
+                board.removePiece(to.column(), to.row()); // Remove any existing piece first
+                board.addPiece(promotionType, promotedPiece.isWhite(), to.column(), to.row());
             }
 
             return true;
@@ -121,8 +125,21 @@ public class ChessGame implements Serializable {
     }
 
     public boolean startGame(String player1, String player2) {
+        // Cria jgadres
         this.whitePlayer = new Player(true);
         this.blackPlayer = new Player(false);
+        this.currentPlayer = whitePlayer;
+
+        this.moveCount = 0;
+        
+        // Cria board
+        this.board = new Board();
+        
+        // Reinicia o tracker de movimentos
+        this.lastMoveFrom = null;
+        this.lastMoveTo = null;
+        
         return true;
     }
 }
+

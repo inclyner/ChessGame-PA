@@ -3,8 +3,6 @@ import javafx.application.Application;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
 
-import java.awt.*;
-
 public class MainJFX extends Application {
     ModelData data;
     public MainJFX() { data = new ModelData(); } // It can also be created in 'init'

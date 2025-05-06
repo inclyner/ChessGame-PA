@@ -3,11 +3,9 @@ package pt.isec.pa.chess.model.data;
 import java.util.ArrayList;
 
 public class Queen extends Piece {
-    public Queen(boolean isWhite,Square position) {
+    public Queen(boolean isWhite, Square position) {
         super(position, isWhite);
     }
-
-
 
     @Override
     public ArrayList<Square> getMoves(Board board) {
@@ -29,7 +27,10 @@ public class Queen extends Piece {
                 currentCol += dir[0];
                 currentRow += dir[1];
 
-                if (!board.isWithinBounds(currentCol, currentRow)) break;
+                // Validate the coordinates before calling getPieceAt
+                if (!board.isWithinBounds(currentCol, currentRow)) {
+                    break;
+                }
 
                 Piece targetPiece = board.getPieceAt(currentCol, currentRow);
 
@@ -47,7 +48,6 @@ public class Queen extends Piece {
         return moves;
     }
 
-
     @Override
     public String toString() {
         if (isWhite()) {
@@ -56,7 +56,4 @@ public class Queen extends Piece {
             return "q";
         }
     }
-
-
-
 }

@@ -66,4 +66,8 @@ public class Rook extends Piece {
         hasMoved = true;
     }
 
+    @Override
+    public boolean isKing() {
+        return false;
+    }
 }
