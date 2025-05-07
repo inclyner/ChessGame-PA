@@ -16,7 +16,7 @@ public class Pawn extends Piece {
         ArrayList<Square> moves = new ArrayList<>();
         int currentCol = position.column();
         int currentRow = position.row();
-        int direction = isWhite() ? 1 : -1;
+        int direction = isWhite() ? -1 : 1;
 
         // Forward moves
         if (board.isWithinBounds(currentCol, currentRow + direction)) {
@@ -84,9 +84,9 @@ public class Pawn extends Piece {
     @Override
     public String toString() {
         if (isWhite()) {
-            return "P";
-        } else {
             return "p";
+        } else {
+            return "P";
         }
     }
 

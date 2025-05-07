@@ -6,17 +6,15 @@ import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import pt.isec.pa.chess.model.ChessGameManager;
-import pt.isec.pa.chess.model.data.Board;
-import pt.isec.pa.chess.model.data.ChessGame;
-import pt.isec.pa.chess.model.data.Piece;
-import pt.isec.pa.chess.model.data.PieceType;
-import pt.isec.pa.chess.model.data.Player;
-import pt.isec.pa.chess.model.data.Square;
+
 
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class BoardFx extends Canvas implements PromotionHandler {
+import static java.lang.Character.isLowerCase;
+import static java.lang.Character.isUpperCase;
+
+public class BoardFx extends Canvas {
 
     private ChessGameManager gameManager;
     private final Color LIGHT_SQUARE = Color.web("#f0d9b5");
@@ -26,8 +24,8 @@ public class BoardFx extends Canvas implements PromotionHandler {
     private final Color HIGHLIGHT = Color.web("#ff494980"); // Semi-transparent red
     private final Color MOVE_INDICATOR = Color.web("#00ff007f"); // Semi-transparent green
 
-    private Square selectedSquare = null;
-    private ArrayList<Square> validMoves = new ArrayList<>(); // Store valid moves for highlighting
+    private Point selectedSquare = null;
+    private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
 
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
@@ -36,7 +34,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
         // Add mouse click event handler
         setOnMouseClicked(event -> {
-            if (gameManager == null || gameManager.getBoard() == null) {
+            if (gameManager == null) {
                 return;
             }
 
@@ -57,21 +55,30 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void handleBoardClick(int col, int row) {
         // First verify bounds
-        if (!gameManager.getBoard().isWithinBounds(col, row)) {
+        if (!gameManager.isWithinBounds(col, row)) {
             return;
         }
 
-        Square clickedSquare = new Square(col, row);
+
+        Point clickedSquare = new Point(col, row);
 
         // First click - select a piece
         if (selectedSquare == null) {
-            Piece piece = gameManager.getBoard().getPieceAt(col, row);
+            String pieceStr = gameManager.getPieceAt(col, row);
+
+            if (pieceStr == null) {
+                return;  // No piece at clicked square
+            }
+
+            char pieceChar = pieceStr.charAt(0);
             // Only allow selecting pieces that belong to current player
-            if (piece != null && piece.isWhite() == gameManager.getGame().getCurrentPlayer().isWhite()) {
+            if(gameManager.isWhitePlaying() && isLowerCase(pieceChar) || !gameManager.isWhitePlaying() && isUpperCase(pieceChar))
+            {
                 selectedSquare = clickedSquare;
-                highlightPossibleMoves(piece);
+                highlightPossibleMoves(col,row);
                 draw();
             }
+
         } // Second click
         else {
             // Clicking the same square - deselect
@@ -92,11 +99,14 @@ public class BoardFx extends Canvas implements PromotionHandler {
                     validMoves.clear();
                 } else {
                     // Invalid move - check if clicking another own piece
-                    Piece newPiece = gameManager.getBoard().getPieceAt(col, row);
-                    if (newPiece != null
-                            && newPiece.isWhite() == gameManager.getGame().getCurrentPlayer().isWhite()) {
+                    String pieceStr = gameManager.getPieceAt(col, row);
+                    char pieceChar = pieceStr.charAt(0);
+
+                    // Only allow selecting pieces that belong to current player
+                    if(gameManager.isWhitePlaying() && isLowerCase(pieceChar))
+                    {
                         selectedSquare = clickedSquare;
-                        highlightPossibleMoves(newPiece);
+                        highlightPossibleMoves(col,row);
                     } else {
                         selectedSquare = null;
                         validMoves.clear();
@@ -113,9 +123,9 @@ public class BoardFx extends Canvas implements PromotionHandler {
     }
 
     // Add method to highlight possible moves
-    private void highlightPossibleMoves(Piece piece) {
+    private void highlightPossibleMoves(int col, int row) {
         // Get valid moves from piece and highlight them
-        validMoves = piece.getMoves(gameManager.getBoard());
+        validMoves = gameManager.getValidMovesAt(col, row);
         draw(); // Redraw to show move indicators
     }
 
@@ -175,7 +185,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void drawHighlights(GraphicsContext gc, int col, int row, double padding, double effectiveCellSize) {
         // Highlight selected square
-        if (selectedSquare != null && selectedSquare.column() == col && selectedSquare.row() == row) {
+        if (selectedSquare != null && selectedSquare.x() == col && selectedSquare.y() == row) {
             gc.setFill(HIGHLIGHT);
             gc.fillRect(
                     padding + col * effectiveCellSize,
@@ -186,7 +196,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
         }
 
         // Highlight valid moves
-        if (validMoves.stream().anyMatch(s -> s.column() == col && s.row() == row)) {
+        if (validMoves.stream().anyMatch(s -> s.x() == col && s.y() == row)) {
             gc.setFill(MOVE_INDICATOR);
             gc.fillOval(
                     padding + col * effectiveCellSize + effectiveCellSize * 0.3,
@@ -199,7 +209,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void drawPieceAt(GraphicsContext gc, int col, int row, double padding, double effectiveCellSize) {
         // Draw pieces
-        if (gameManager != null && gameManager.getBoard() != null) {
+        if (gameManager != null) {
             String pieceStr = gameManager.getPieceAt(col, row);
             if (pieceStr != null) {
                 drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
@@ -208,7 +218,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
     }
 
     private void drawTurnIndicator(GraphicsContext gc) {
-        boolean isWhiteTurn = gameManager.getGame().getCurrentPlayer().isWhite();
+        boolean isWhiteTurn = gameManager.isWhitePlaying();
         gc.setFill(isWhiteTurn ? PIECE_WHITE : PIECE_BLACK);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(2);
@@ -256,7 +266,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
                 );
 
                 // Draw pieces with the new offset
-                if (gameManager != null && gameManager.getBoard() != null) {
+                if (gameManager != null) {
                     String pieceStr = gameManager.getPieceAt(col, row);
                     if (pieceStr != null) {
                         drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
@@ -284,17 +294,23 @@ public class BoardFx extends Canvas implements PromotionHandler {
     }
 
 
-    @Override
-    public PieceType getPromotionChoice() {
+
+    public String getPromotionChoice(boolean isWhite) {
         ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", "Queen", "Knight");
         dialog.setTitle("Pawn Promotion");
         dialog.setHeaderText("Choose piece for pawn promotion");
         dialog.setContentText("Select piece:");
 
         Optional<String> result = dialog.showAndWait();
+        if (isWhite) {
+            return result.map(choice
+                    -> choice.equals("Queen") ? "Q" : "K"
+            ).orElse("Q");
+        }
         return result.map(choice
-                -> choice.equals("Queen") ? PieceType.QUEEN : PieceType.KNIGHT
-        ).orElse(PieceType.QUEEN);
+                -> choice.equals("Queen") ? "q" : "k"
+        ).orElse("q");
+
     }
 
     private String getPieceImgName(String piece) {

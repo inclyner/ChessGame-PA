@@ -52,6 +52,6 @@ public class Knight extends Piece {
 
     @Override
     public String toString() {
-        return isWhite() ? "N" : "n";
+        return isWhite() ? "n" : "N";
     }
 }

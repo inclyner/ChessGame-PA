@@ -60,7 +60,7 @@ public class Rook extends Piece {
 
     @Override
     public String toString() {
-        return isWhite() ? "R" : "r";
+        return isWhite() ? "r" : "R";
     }
 
     public void setHasMoved() {

@@ -161,4 +161,9 @@ public class ChessGame implements Serializable {
             }
         };
     }
+
+    public boolean isWithinBounds(int col, int row) {
+        return board.isWithinBounds(col, row);
+
+    }
 }

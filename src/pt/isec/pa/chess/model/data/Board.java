@@ -25,35 +25,35 @@ public class Board implements Serializable {
     }
 
     private void setupBoard() {
-        // Primeira linha (brancas)
-        addPiece(PieceType.ROOK, true, 0, 0);
-        addPiece(PieceType.KNIGHT, true, 1, 0);
-        addPiece(PieceType.BISHOP, true, 2, 0);
-        addPiece(PieceType.QUEEN, true, 3, 0);
-        addPiece(PieceType.KING, true, 4, 0);
-        addPiece(PieceType.BISHOP, true, 5, 0);
-        addPiece(PieceType.KNIGHT, true, 6, 0);
-        addPiece(PieceType.ROOK, true, 7, 0);
+        // Primeira linha (pretas)
+        addPiece(PieceType.ROOK, false, 0, 0);
+        addPiece(PieceType.KNIGHT, false, 1, 0);
+        addPiece(PieceType.BISHOP, false, 2, 0);
+        addPiece(PieceType.QUEEN, false, 3, 0);
+        addPiece(PieceType.KING, false, 4, 0);
+        addPiece(PieceType.BISHOP, false, 5, 0);
+        addPiece(PieceType.KNIGHT, false, 6, 0);
+        addPiece(PieceType.ROOK, false, 7, 0);
 
         // Peões brancos
         for (int col = 0; col < BOARD_SIZE; col++) {
-            addPiece(PieceType.PAWN, true, col, 1);
+            addPiece(PieceType.PAWN, false, col, 1);
         }
 
         // Peões pretos
         for (int col = 0; col < BOARD_SIZE; col++) {
-            addPiece(PieceType.PAWN, false, col, 6);
+            addPiece(PieceType.PAWN, true, col, 6);
         }
 
-        // Primeira linha (pretas)
-        addPiece(PieceType.ROOK, false, 0, 7);
-        addPiece(PieceType.KNIGHT, false, 1, 7);
-        addPiece(PieceType.BISHOP, false, 2, 7);
-        addPiece(PieceType.QUEEN, false, 3, 7);
-        addPiece(PieceType.KING, false, 4, 7);
-        addPiece(PieceType.BISHOP, false, 5, 7);
-        addPiece(PieceType.KNIGHT, false, 6, 7);
-        addPiece(PieceType.ROOK, false, 7, 7);
+        // Primeira linha (brancas)
+        addPiece(PieceType.ROOK, true, 0, 7);
+        addPiece(PieceType.KNIGHT, true, 1, 7);
+        addPiece(PieceType.BISHOP, true, 2, 7);
+        addPiece(PieceType.QUEEN, true, 3, 7);
+        addPiece(PieceType.KING, true, 4, 7);
+        addPiece(PieceType.BISHOP, true, 5, 7);
+        addPiece(PieceType.KNIGHT, true, 6, 7);
+        addPiece(PieceType.ROOK, true, 7, 7);
     }
 
     public boolean addPiece(PieceType type, boolean isWhite, int column, int row) {
