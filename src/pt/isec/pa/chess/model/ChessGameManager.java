@@ -39,4 +39,11 @@ public class ChessGameManager {
     public Board getBoard() {
         return game.getBoard();
     }
+
+    public String getPieceAt(int col, int row) {
+        if(game.getBoard().getPieceAt(col, row)!= null) {
+            return game.getBoard().getPieceAt(col, row).toString();
+        }
+        return "0";
+    }
 }

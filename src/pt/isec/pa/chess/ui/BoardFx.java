@@ -200,9 +200,9 @@ public class BoardFx extends Canvas implements PromotionHandler {
     private void drawPieceAt(GraphicsContext gc, int col, int row, double padding, double effectiveCellSize) {
         // Draw pieces
         if (gameManager != null && gameManager.getBoard() != null) {
-            Piece piece = gameManager.getBoard().getPieceAt(col, row);
-            if (piece != null) {
-                drawPiece(gc, piece, col, row, effectiveCellSize, padding);
+            String pieceStr = gameManager.getPieceAt(col, row);
+            if (pieceStr != null) {
+                drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
             }
         }
     }
@@ -257,54 +257,32 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
                 // Draw pieces with the new offset
                 if (gameManager != null && gameManager.getBoard() != null) {
-                    Piece piece = gameManager.getBoard().getPieceAt(col, row);
-                    if (piece != null) {
-                        drawPiece(gc, piece, col, row, effectiveCellSize, padding);
+                    String pieceStr = gameManager.getPieceAt(col, row);
+                    if (pieceStr != null) {
+                        drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
                     }
                 }
             }
         }
     }
 
-    private void drawPiece(GraphicsContext gc, Piece piece, int col, int row,
-            double cellSize, double padding) {
+    private void drawPiece(GraphicsContext gc, String pieceStr, int col, int row,
+                           double cellSize, double padding) {
         double x = padding + col * cellSize;
         double y = padding + row * cellSize;
 
-        // Get piece type from string representation
-        String pieceChar = piece.toString().toUpperCase();
-        boolean isWhite = piece.isWhite();
-
-        // Draw piece based on type
-        gc.setFill(isWhite ? PIECE_WHITE : PIECE_BLACK);
-        gc.setStroke(isWhite ? PIECE_BLACK : PIECE_WHITE);
-        gc.setLineWidth(1.5);
+        // Get piece type from the piece string
 
         double piecePadding = cellSize * 0.15;
         double size = cellSize - (2 * piecePadding);
 
-        // Use Unicode chess symbols
-        String symbol = switch (pieceChar) {
-            case "K" ->
-                isWhite ? "♔" : "♚";
-            case "Q" ->
-                isWhite ? "♕" : "♛";
-            case "R" ->
-                isWhite ? "♖" : "♜";
-            case "B" ->
-                isWhite ? "♗" : "♝";
-            case "N" ->
-                isWhite ? "♘" : "♞";
-            case "P" ->
-                isWhite ? "♙" : "♟";
-            default ->
-                "?";
-        };
 
-        gc.setFont(Font.font("Arial", size * 0.8));
-        gc.strokeText(symbol, x + size / 4, y + size * 0.75);
-        gc.fillText(symbol, x + size / 4, y + size * 0.75);
+        String pieceImgName = getPieceImgName(pieceStr);
+
+        gc.drawImage(ImageManager.getImage(pieceImgName), x, y, size, size);
+
     }
+
 
     @Override
     public PieceType getPromotionChoice() {
@@ -317,5 +295,24 @@ public class BoardFx extends Canvas implements PromotionHandler {
         return result.map(choice
                 -> choice.equals("Queen") ? PieceType.QUEEN : PieceType.KNIGHT
         ).orElse(PieceType.QUEEN);
+    }
+
+    private String getPieceImgName(String piece) {
+        String symbol = piece.substring(0, 1);
+        return switch (symbol) {
+            case "k" -> "kingW.png";
+            case "K" -> "kingB.png";
+            case "q" -> "queenW.png";
+            case "Q" -> "queenB.png";
+            case "r" -> "rookW.png";
+            case "R" -> "rookB.png";
+            case "b" -> "bishopW.png";
+            case "B" -> "bishopB.png";
+            case "n" -> "knightW.png";
+            case "N" -> "knightB.png";
+            case "p" -> "pawnW.png";
+            case "P" -> "pawnB.png";
+            default -> "";
+        };
     }
 }
