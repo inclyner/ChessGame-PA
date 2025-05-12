@@ -1,6 +1,5 @@
 package pt.isec.pa.chess.model;
 
-import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Square;
 import pt.isec.pa.chess.ui.Point;
@@ -62,6 +61,10 @@ public class ChessGameManager {
             validMoves.add(new Point(square.column(), square.row()));
         }
         return validMoves;
+    }
+
+    public int getBoardSize() {
+        return game.getBoardSize();
     }
 
 }

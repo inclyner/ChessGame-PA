@@ -315,8 +315,8 @@ public class Board implements Serializable {
     public boolean isKingInCheck(boolean isWhite) {
         // Find the king's position
         Square kingPosition = null;
-        for (int col = 0; col < 8; col++) {
-            for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
                 Piece piece = getPieceAt(col, row);
                 if (piece instanceof King && piece.isWhite() == isWhite) {
                     kingPosition = new Square(col, row);
@@ -338,8 +338,8 @@ public class Board implements Serializable {
 
     public boolean isSquareUnderAttack(Square square, boolean isWhite) {
         // Check if any opponent's piece can move to this square
-        for (int col = 0; col < 8; col++) {
-            for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
                 Piece piece = getPieceAt(col, row);
                 if (piece != null && piece.isWhite() != isWhite) {
                     ArrayList<Square> moves = piece.getMoves(this);
@@ -378,6 +378,10 @@ public class Board implements Serializable {
 
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
+    }
+
+    public int getBoardSize() {
+        return BOARD_SIZE;
     }
 
     public enum GameResult {

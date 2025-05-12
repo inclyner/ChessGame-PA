@@ -26,12 +26,12 @@ public class BoardFx extends Canvas {
 
     private Point selectedSquare = null;
     private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
-
+    private int BOARD_SIZE;
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
         setWidth(600);   // Match the window size
         setHeight(600);  // Match the window size
-
+        BOARD_SIZE = gameManager.getBoardSize();
         // Add mouse click event handler
         setOnMouseClicked(event -> {
             if (gameManager == null) {
@@ -40,14 +40,14 @@ public class BoardFx extends Canvas {
 
             // Calculate board dimensions with padding
             final double padding = 30;
-            final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+            final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
             // Adjust for padding in click coordinates
             int col = (int) ((event.getX() - padding) / effectiveCellSize);
             int row = (int) ((event.getY() - padding) / effectiveCellSize);
 
             // Make sure the coordinates are within the board
-            if (col >= 0 && col < 8 && row >= 0 && row < 8) {
+            if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
                 handleBoardClick(col, row);
             }
         });
@@ -133,7 +133,7 @@ public class BoardFx extends Canvas {
         GraphicsContext gc = getGraphicsContext2D();
         gc.clearRect(0, 0, getWidth(), getHeight());
         final double padding = 30;
-        final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+        final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
         // Draw board elements
         drawCoordinates(gc, padding, effectiveCellSize);
@@ -146,7 +146,7 @@ public class BoardFx extends Canvas {
         gc.setFont(new Font(14));
 
         // Draw column letters (A-H)
-        for (int col = 0; col < 8; col++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
             String letter = String.valueOf((char) ('A' + col));
             gc.fillText(letter,
                     padding + col * effectiveCellSize + effectiveCellSize / 2 - 5,
@@ -154,8 +154,8 @@ public class BoardFx extends Canvas {
         }
 
         // Draw row numbers (1-8)
-        for (int row = 0; row < 8; row++) {
-            String number = String.valueOf(8 - row);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            String number = String.valueOf(BOARD_SIZE - row);
             gc.fillText(number,
                     padding / 3,
                     padding + row * effectiveCellSize + effectiveCellSize / 2 + 5);
@@ -163,8 +163,8 @@ public class BoardFx extends Canvas {
     }
 
     private void drawBoardAndPieces(GraphicsContext gc, double padding, double effectiveCellSize) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 drawSquare(gc, col, row, padding, effectiveCellSize);
                 drawHighlights(gc, col, row, padding, effectiveCellSize);
                 drawPieceAt(gc, col, row, padding, effectiveCellSize);
@@ -232,14 +232,14 @@ public class BoardFx extends Canvas {
 
         // Add padding for coordinates
         double padding = 30;
-        double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+        double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
         // Draw coordinates
         gc.setFill(Color.BLACK);
         gc.setFont(new Font(14));
 
         // Draw column letters (A-H)
-        for (int col = 0; col < 8; col++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
             String letter = String.valueOf((char) ('A' + col));
             gc.fillText(letter,
                     padding + col * effectiveCellSize + effectiveCellSize / 2 - 5,
@@ -247,16 +247,16 @@ public class BoardFx extends Canvas {
         }
 
         // Draw row numbers (1-8)
-        for (int row = 0; row < 8; row++) {
-            String number = String.valueOf(8 - row);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            String number = String.valueOf(BOARD_SIZE - row);
             gc.fillText(number,
                     padding / 3,
                     padding + row * effectiveCellSize + effectiveCellSize / 2 + 5);
         }
 
         // Draw board squares with offset for coordinates
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 gc.setFill((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
                 gc.fillRect(
                         padding + col * effectiveCellSize,
