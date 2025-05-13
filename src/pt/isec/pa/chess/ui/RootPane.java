@@ -23,6 +23,7 @@ public class RootPane extends BorderPane { //View-Controller
     Canvas canvas;
     Pane center;
     String whiteName, blackName;
+    private MenuItem miLogs; // 1. variável de instância
 
 
     // variables, including reference to views
@@ -123,6 +124,10 @@ public class RootPane extends BorderPane { //View-Controller
         });
 
 
+        miLogs.setOnAction(e -> {
+            LogWindow logWindow = new LogWindow();
+            logWindow.show();
+        });
     }
 
     private void update() {
@@ -141,8 +146,14 @@ public class RootPane extends BorderPane { //View-Controller
         miImport = new MenuItem("Import");
         miExport = new MenuItem("Export");
         miQuit = new MenuItem("Quit");
+        miLogs = new MenuItem("Logs");
 
-        menuGame.getItems().addAll(miNew, miOpen, miSave, new SeparatorMenuItem(), miImport, miExport, new SeparatorMenuItem(), miQuit);
+        menuGame.getItems().addAll(
+            miNew, miOpen, miSave, new SeparatorMenuItem(),
+            miImport, miExport, new SeparatorMenuItem(),
+            miLogs,
+            miQuit
+        );
 
         Menu menuMode = new Menu("Mode");
         miNormal = new RadioMenuItem("Normal");
