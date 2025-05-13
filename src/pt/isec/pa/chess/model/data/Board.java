@@ -25,35 +25,35 @@ public class Board implements Serializable {
     }
 
     private void setupBoard() {
-        // Primeira linha (brancas)
-        addPiece(PieceType.ROOK, true, 0, 0);
-        addPiece(PieceType.KNIGHT, true, 1, 0);
-        addPiece(PieceType.BISHOP, true, 2, 0);
-        addPiece(PieceType.QUEEN, true, 3, 0);
-        addPiece(PieceType.KING, true, 4, 0);
-        addPiece(PieceType.BISHOP, true, 5, 0);
-        addPiece(PieceType.KNIGHT, true, 6, 0);
-        addPiece(PieceType.ROOK, true, 7, 0);
-
-        // Peões brancos
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            addPiece(PieceType.PAWN, true, col, 1);
-        }
+        // Primeira linha (pretas)
+        addPiece(PieceType.ROOK, false, 0, 0);
+        addPiece(PieceType.KNIGHT, false, 1, 0);
+        addPiece(PieceType.BISHOP, false, 2, 0);
+        addPiece(PieceType.QUEEN, false, 3, 0);
+        addPiece(PieceType.KING, false, 4, 0);
+        addPiece(PieceType.BISHOP, false, 5, 0);
+        addPiece(PieceType.KNIGHT, false, 6, 0);
+        addPiece(PieceType.ROOK, false, 7, 0);
 
         // Peões pretos
         for (int col = 0; col < BOARD_SIZE; col++) {
-            addPiece(PieceType.PAWN, false, col, 6);
+            addPiece(PieceType.PAWN, false, col, 1);
         }
 
-        // Primeira linha (pretas)
-        addPiece(PieceType.ROOK, false, 0, 7);
-        addPiece(PieceType.KNIGHT, false, 1, 7);
-        addPiece(PieceType.BISHOP, false, 2, 7);
-        addPiece(PieceType.QUEEN, false, 3, 7);
-        addPiece(PieceType.KING, false, 4, 7);
-        addPiece(PieceType.BISHOP, false, 5, 7);
-        addPiece(PieceType.KNIGHT, false, 6, 7);
-        addPiece(PieceType.ROOK, false, 7, 7);
+        // Peões brancos
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            addPiece(PieceType.PAWN, true, col, 6);
+        }
+
+        // Primeira linha (brancas)
+        addPiece(PieceType.ROOK, true, 0, 7);
+        addPiece(PieceType.KNIGHT, true, 1, 7);
+        addPiece(PieceType.BISHOP, true, 2, 7);
+        addPiece(PieceType.QUEEN, true, 3, 7);
+        addPiece(PieceType.KING, true, 4, 7);
+        addPiece(PieceType.BISHOP, true, 5, 7);
+        addPiece(PieceType.KNIGHT, true, 6, 7);
+        addPiece(PieceType.ROOK, true, 7, 7);
     }
 
     public boolean addPiece(PieceType type, boolean isWhite, int column, int row) {
@@ -66,29 +66,6 @@ public class Board implements Serializable {
 
         board[column][row] = piece;
         return true;
-    }
-
-    public boolean removePiece(int column, int row) {
-        // checks if piece can be removed
-        if (board[column][row] != null && board[column][row].isKing()) {
-            return false;
-        }
-        board[column][row] = null;
-        return true;
-    }
-
-    public boolean movePiece(Piece piece, int column, int row, boolean isWhitePlaying) {
-        if (checkMove(piece, column, row, isWhitePlaying)) {
-            lastMoveFrom = piece.getPosition();
-            lastMoveTo = new Square(column, row);
-
-            piece.position = new Square(column, row);
-            piece.setHasMoved();
-            board[column][row] = piece;
-            return true;
-        }
-        return false;
-
     }
 
     public boolean movePiece(Square from, Square to) {
@@ -107,11 +84,25 @@ public class Board implements Serializable {
         Square originalPosition = piece.getPosition();
         Piece targetPiece = getPieceAt(to.column(), to.row());
 
+        // Check for En Passant capture
+        boolean isEnPassantCapture = false;
+        if (piece instanceof Pawn && 
+            from.column() != to.column() && 
+            targetPiece == null) {
+            isEnPassantCapture = true;
+            System.out.println("En Passant capture detected");
+            int capturedPawnRow = from.row();
+            int capturedPawnCol = to.column();
+            targetPiece = getPieceAt(capturedPawnCol, capturedPawnRow);
+            board[capturedPawnCol][capturedPawnRow] = null; // Remove captured pawn
+        }
+
         // Make the move temporarily
         board[to.column()][to.row()] = piece;
         board[from.column()][from.row()] = null;
         piece.setPosition(to);
 
+        
         // Check if move leaves or keeps own king in check
         boolean causesCheck = isPlayerInCheck(piece.isWhite());
 
@@ -173,18 +164,6 @@ public class Board implements Serializable {
         return false; // Move is not valid
     }
 
-    public boolean checkEndGame() {
-        // TODO implementar
-        return false;
-    }
-
-    public void clear() {
-        for (int column = 0; column <= BOARD_SIZE - 1; column++) {
-            for (int row = 0; row <= BOARD_SIZE - 1; row++) {
-                board[column][row] = null;
-            }
-        }
-    }
 
     @Override
     public String toString() {
@@ -312,34 +291,11 @@ public class Board implements Serializable {
         return null;
     }
 
-    public boolean isKingInCheck(boolean isWhite) {
-        // Find the king's position
-        Square kingPosition = null;
-        for (int col = 0; col < 8; col++) {
-            for (int row = 0; row < 8; row++) {
-                Piece piece = getPieceAt(col, row);
-                if (piece instanceof King && piece.isWhite() == isWhite) {
-                    kingPosition = new Square(col, row);
-                    break;
-                }
-            }
-            if (kingPosition != null) {
-                break;
-            }
-        }
-
-        if (kingPosition == null) {
-            return false;
-        }
-
-        // Check if any opponent's piece can attack the king's position
-        return isSquareUnderAttack(kingPosition, isWhite);
-    }
 
     public boolean isSquareUnderAttack(Square square, boolean isWhite) {
         // Check if any opponent's piece can move to this square
-        for (int col = 0; col < 8; col++) {
-            for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
                 Piece piece = getPieceAt(col, row);
                 if (piece != null && piece.isWhite() != isWhite) {
                     ArrayList<Square> moves = piece.getMoves(this);
@@ -378,6 +334,10 @@ public class Board implements Serializable {
 
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
+    }
+
+    public int getBoardSize() {
+        return BOARD_SIZE;
     }
 
     public enum GameResult {

@@ -21,4 +21,12 @@ public class MainJFX extends Application {
         stage.setTitle("ChessGame");
         stage.show();
     }
+
+    @Override
+    public void stop() {
+        // Limpar listeners
+        if (data != null && data.getBoardFx() != null) {
+            data.getBoardFx().cleanup();
+        }
+    }
 }

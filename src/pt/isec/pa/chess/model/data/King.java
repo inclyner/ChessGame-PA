@@ -114,6 +114,6 @@ public class King extends Piece {
 
     @Override
     public String toString() {
-        return isWhite() ? "K" : "k";
+        return isWhite() ? "k" : "K";
     }
 }

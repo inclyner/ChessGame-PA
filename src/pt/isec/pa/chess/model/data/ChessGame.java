@@ -10,12 +10,17 @@ public class ChessGame implements Serializable {
     private final Player whitePlayer;
     private final Player blackPlayer;
     private boolean isGameOver = false;
+    int BOARD_SIZE;
+    private boolean promotionPending = false;
+    private Square promotionSquare = null;
+    private PromotionHandler promotionHandler;
 
     public ChessGame() {
         board = new Board();
         whitePlayer = new Player(true);
         blackPlayer = new Player(false);
         currentPlayer = whitePlayer; // White starts
+        BOARD_SIZE= board.getBoardSize();
     }
 
     public boolean startGame(String player1Name, String player2Name) {
@@ -49,6 +54,22 @@ public class ChessGame implements Serializable {
             }
         }
 
+        Piece last = board.getLastMovedPiece();
+        if (last instanceof Pawn p && (p.isWhite() && p.getPosition().row() == 0 ||
+                !p.isWhite() && p.getPosition().row() == 7)) {
+            PieceType choice = promotionHandler.getPromotionChoice();
+            board.setPieceFromChar(
+                    promotionSquare.column(),
+                    promotionSquare.row(),
+                    switch(choice) {
+                        case QUEEN:  yield p.isWhite()? 'Q':'q';
+                        case ROOK:   yield p.isWhite()? 'R':'r';
+                        case BISHOP: yield p.isWhite()? 'B':'b';
+                        case KNIGHT: yield p.isWhite()? 'N':'n';
+                        default:     yield p.isWhite()? 'Q':'q';
+                    }
+            );
+        }
         // Move was successful, switch turns first
         switchTurn();
 
@@ -86,9 +107,9 @@ public class ChessGame implements Serializable {
         currentPlayer = lines[0].equals("W") ? whitePlayer : blackPlayer;
 
         // Import board state
-        for (int row = 0; row < 8; row++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
             String boardRow = lines[row + 1];
-            for (int col = 0; col < 8; col++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 char pieceChar = boardRow.charAt(col);
                 if (pieceChar != '.') {
                     board.setPieceFromChar(col, row, pieceChar);
@@ -161,4 +182,20 @@ public class ChessGame implements Serializable {
             }
         };
     }
+
+    public boolean isWithinBounds(int col, int row) {
+        return board.isWithinBounds(col, row);
+
+    }
+
+    public int getBoardSize() {
+        return BOARD_SIZE;
+    }
+
+
+    public void setPromotionHandler(PromotionHandler handler) {
+        this.promotionHandler = handler;
+    }
+
+
 }

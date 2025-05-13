@@ -5,18 +5,19 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import pt.isec.pa.chess.model.ChessGameManager;
-import pt.isec.pa.chess.model.data.Board;
-import pt.isec.pa.chess.model.data.ChessGame;
-import pt.isec.pa.chess.model.data.Piece;
-import pt.isec.pa.chess.model.data.PieceType;
-import pt.isec.pa.chess.model.data.Player;
-import pt.isec.pa.chess.model.data.Square;
+import pt.isec.pa.chess.model.ModelLog;
 
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Optional;
 
-public class BoardFx extends Canvas implements PromotionHandler {
+import static java.lang.Character.isLowerCase;
+import static java.lang.Character.isUpperCase;
+
+public class BoardFx extends Canvas implements PropertyChangeListener {
 
     private ChessGameManager gameManager;
     private final Color LIGHT_SQUARE = Color.web("#f0d9b5");
@@ -26,52 +27,74 @@ public class BoardFx extends Canvas implements PromotionHandler {
     private final Color HIGHLIGHT = Color.web("#ff494980"); // Semi-transparent red
     private final Color MOVE_INDICATOR = Color.web("#00ff007f"); // Semi-transparent green
 
-    private Square selectedSquare = null;
-    private ArrayList<Square> validMoves = new ArrayList<>(); // Store valid moves for highlighting
-
+    private Point selectedSquare = null;
+    private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
+    private int BOARD_SIZE;
+    private String whiteName, blackName;
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
         setWidth(600);   // Match the window size
         setHeight(600);  // Match the window size
+        BOARD_SIZE = gameManager.getBoardSize();
+
+        // Registrar para eventos do ChessGameManager
+        gameManager.addPropertyChangeListener(this);
+
+        // incluir ModelLog para reações a mudanças importantes
+        ModelLog.getInstance().addPropertyChangeListener(this);
 
         // Add mouse click event handler
         setOnMouseClicked(event -> {
-            if (gameManager == null || gameManager.getBoard() == null) {
+            if (gameManager == null) {
                 return;
             }
 
             // Calculate board dimensions with padding
             final double padding = 30;
-            final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+            final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
             // Adjust for padding in click coordinates
             int col = (int) ((event.getX() - padding) / effectiveCellSize);
             int row = (int) ((event.getY() - padding) / effectiveCellSize);
 
             // Make sure the coordinates are within the board
-            if (col >= 0 && col < 8 && row >= 0 && row < 8) {
+            if (col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE) {
                 handleBoardClick(col, row);
             }
         });
     }
 
+    public void setPlayerNames(String white, String black) {
+        this.whiteName = white;
+        this.blackName = black;
+    }
+
     private void handleBoardClick(int col, int row) {
         // First verify bounds
-        if (!gameManager.getBoard().isWithinBounds(col, row)) {
+        if (!gameManager.isWithinBounds(col, row)) {
             return;
         }
 
-        Square clickedSquare = new Square(col, row);
+
+        Point clickedSquare = new Point(col, row);
 
         // First click - select a piece
         if (selectedSquare == null) {
-            Piece piece = gameManager.getBoard().getPieceAt(col, row);
+            String pieceStr = gameManager.getPieceAt(col, row);
+
+            if (pieceStr == null) {
+                return;  // No piece at clicked square
+            }
+
+            char pieceChar = pieceStr.charAt(0);
             // Only allow selecting pieces that belong to current player
-            if (piece != null && piece.isWhite() == gameManager.getGame().getCurrentPlayer().isWhite()) {
+            if(gameManager.isWhitePlaying() && isLowerCase(pieceChar) || !gameManager.isWhitePlaying() && isUpperCase(pieceChar))
+            {
                 selectedSquare = clickedSquare;
-                highlightPossibleMoves(piece);
+                highlightPossibleMoves(col,row);
                 draw();
             }
+
         } // Second click
         else {
             // Clicking the same square - deselect
@@ -92,11 +115,17 @@ public class BoardFx extends Canvas implements PromotionHandler {
                     validMoves.clear();
                 } else {
                     // Invalid move - check if clicking another own piece
-                    Piece newPiece = gameManager.getBoard().getPieceAt(col, row);
-                    if (newPiece != null
-                            && newPiece.isWhite() == gameManager.getGame().getCurrentPlayer().isWhite()) {
+                    String pieceStr = gameManager.getPieceAt(col, row);
+                    if (pieceStr == null) {
+                        return;  // No piece at clicked square
+                    }
+                    char pieceChar = pieceStr.charAt(0);
+
+                    // Only allow selecting pieces that belong to current player
+                    if(gameManager.isWhitePlaying() && isLowerCase(pieceChar))
+                    {
                         selectedSquare = clickedSquare;
-                        highlightPossibleMoves(newPiece);
+                        highlightPossibleMoves(col,row);
                     } else {
                         selectedSquare = null;
                         validMoves.clear();
@@ -113,9 +142,9 @@ public class BoardFx extends Canvas implements PromotionHandler {
     }
 
     // Add method to highlight possible moves
-    private void highlightPossibleMoves(Piece piece) {
+    private void highlightPossibleMoves(int col, int row) {
         // Get valid moves from piece and highlight them
-        validMoves = piece.getMoves(gameManager.getBoard());
+        validMoves = gameManager.getValidMovesAt(col, row);
         draw(); // Redraw to show move indicators
     }
 
@@ -123,7 +152,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
         GraphicsContext gc = getGraphicsContext2D();
         gc.clearRect(0, 0, getWidth(), getHeight());
         final double padding = 30;
-        final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+        final double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
         // Draw board elements
         drawCoordinates(gc, padding, effectiveCellSize);
@@ -136,7 +165,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
         gc.setFont(new Font(14));
 
         // Draw column letters (A-H)
-        for (int col = 0; col < 8; col++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
             String letter = String.valueOf((char) ('A' + col));
             gc.fillText(letter,
                     padding + col * effectiveCellSize + effectiveCellSize / 2 - 5,
@@ -144,8 +173,8 @@ public class BoardFx extends Canvas implements PromotionHandler {
         }
 
         // Draw row numbers (1-8)
-        for (int row = 0; row < 8; row++) {
-            String number = String.valueOf(8 - row);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            String number = String.valueOf(BOARD_SIZE - row);
             gc.fillText(number,
                     padding / 3,
                     padding + row * effectiveCellSize + effectiveCellSize / 2 + 5);
@@ -153,8 +182,8 @@ public class BoardFx extends Canvas implements PromotionHandler {
     }
 
     private void drawBoardAndPieces(GraphicsContext gc, double padding, double effectiveCellSize) {
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 drawSquare(gc, col, row, padding, effectiveCellSize);
                 drawHighlights(gc, col, row, padding, effectiveCellSize);
                 drawPieceAt(gc, col, row, padding, effectiveCellSize);
@@ -175,7 +204,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void drawHighlights(GraphicsContext gc, int col, int row, double padding, double effectiveCellSize) {
         // Highlight selected square
-        if (selectedSquare != null && selectedSquare.column() == col && selectedSquare.row() == row) {
+        if (selectedSquare != null && selectedSquare.x() == col && selectedSquare.y() == row) {
             gc.setFill(HIGHLIGHT);
             gc.fillRect(
                     padding + col * effectiveCellSize,
@@ -186,7 +215,7 @@ public class BoardFx extends Canvas implements PromotionHandler {
         }
 
         // Highlight valid moves
-        if (validMoves.stream().anyMatch(s -> s.column() == col && s.row() == row)) {
+        if (validMoves.stream().anyMatch(s -> s.x() == col && s.y() == row)) {
             gc.setFill(MOVE_INDICATOR);
             gc.fillOval(
                     padding + col * effectiveCellSize + effectiveCellSize * 0.3,
@@ -199,16 +228,37 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
     private void drawPieceAt(GraphicsContext gc, int col, int row, double padding, double effectiveCellSize) {
         // Draw pieces
-        if (gameManager != null && gameManager.getBoard() != null) {
-            Piece piece = gameManager.getBoard().getPieceAt(col, row);
-            if (piece != null) {
-                drawPiece(gc, piece, col, row, effectiveCellSize, padding);
+        if (gameManager != null) {
+            String pieceStr = gameManager.getPieceAt(col, row);
+            if (pieceStr != null) {
+                drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
             }
         }
     }
 
     private void drawTurnIndicator(GraphicsContext gc) {
-        boolean isWhiteTurn = gameManager.getGame().getCurrentPlayer().isWhite();
+        boolean isWhiteTurn = gameManager.isWhitePlaying();
+
+
+        gc.setFill(Color.BLACK);
+
+        // Fonte para o jogador atual: bold
+        Font boldFont = Font.font("System", FontWeight.BOLD, 18);
+        Font normalFont = Font.font("System", FontWeight.NORMAL, 18);
+
+        // Coordenadas do topo
+        double centerY = 22;
+
+        // Nome do jogador branco à esquerda
+        gc.setFont(isWhiteTurn ? boldFont : normalFont);
+        gc.fillText(whiteName, getWidth() * 0.15, centerY);
+
+        // Nome do jogador preto à direita
+        gc.setFont(!isWhiteTurn ? boldFont : normalFont);
+        gc.fillText(blackName, getWidth() * 0.65, centerY);
+
+
+
         gc.setFill(isWhiteTurn ? PIECE_WHITE : PIECE_BLACK);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(2);
@@ -222,14 +272,14 @@ public class BoardFx extends Canvas implements PromotionHandler {
 
         // Add padding for coordinates
         double padding = 30;
-        double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / 8;
+        double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
 
         // Draw coordinates
         gc.setFill(Color.BLACK);
         gc.setFont(new Font(14));
 
         // Draw column letters (A-H)
-        for (int col = 0; col < 8; col++) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
             String letter = String.valueOf((char) ('A' + col));
             gc.fillText(letter,
                     padding + col * effectiveCellSize + effectiveCellSize / 2 - 5,
@@ -237,16 +287,16 @@ public class BoardFx extends Canvas implements PromotionHandler {
         }
 
         // Draw row numbers (1-8)
-        for (int row = 0; row < 8; row++) {
-            String number = String.valueOf(8 - row);
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            String number = String.valueOf(BOARD_SIZE - row);
             gc.fillText(number,
                     padding / 3,
                     padding + row * effectiveCellSize + effectiveCellSize / 2 + 5);
         }
 
         // Draw board squares with offset for coordinates
-        for (int row = 0; row < 8; row++) {
-            for (int col = 0; col < 8; col++) {
+        for (int row = 0; row < BOARD_SIZE; row++) {
+            for (int col = 0; col < BOARD_SIZE; col++) {
                 gc.setFill((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
                 gc.fillRect(
                         padding + col * effectiveCellSize,
@@ -256,66 +306,101 @@ public class BoardFx extends Canvas implements PromotionHandler {
                 );
 
                 // Draw pieces with the new offset
-                if (gameManager != null && gameManager.getBoard() != null) {
-                    Piece piece = gameManager.getBoard().getPieceAt(col, row);
-                    if (piece != null) {
-                        drawPiece(gc, piece, col, row, effectiveCellSize, padding);
+                if (gameManager != null) {
+                    String pieceStr = gameManager.getPieceAt(col, row);
+                    if (pieceStr != null) {
+                        drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
                     }
                 }
             }
         }
     }
 
-    private void drawPiece(GraphicsContext gc, Piece piece, int col, int row,
-            double cellSize, double padding) {
+    private void drawPiece(GraphicsContext gc, String pieceStr, int col, int row,
+                           double cellSize, double padding) {
         double x = padding + col * cellSize;
         double y = padding + row * cellSize;
 
-        // Get piece type from string representation
-        String pieceChar = piece.toString().toUpperCase();
-        boolean isWhite = piece.isWhite();
-
-        // Draw piece based on type
-        gc.setFill(isWhite ? PIECE_WHITE : PIECE_BLACK);
-        gc.setStroke(isWhite ? PIECE_BLACK : PIECE_WHITE);
-        gc.setLineWidth(1.5);
+        // Get piece type from the piece string
 
         double piecePadding = cellSize * 0.15;
         double size = cellSize - (2 * piecePadding);
 
-        // Use Unicode chess symbols
-        String symbol = switch (pieceChar) {
-            case "K" ->
-                isWhite ? "♔" : "♚";
-            case "Q" ->
-                isWhite ? "♕" : "♛";
-            case "R" ->
-                isWhite ? "♖" : "♜";
-            case "B" ->
-                isWhite ? "♗" : "♝";
-            case "N" ->
-                isWhite ? "♘" : "♞";
-            case "P" ->
-                isWhite ? "♙" : "♟";
-            default ->
-                "?";
-        };
 
-        gc.setFont(Font.font("Arial", size * 0.8));
-        gc.strokeText(symbol, x + size / 4, y + size * 0.75);
-        gc.fillText(symbol, x + size / 4, y + size * 0.75);
+        String pieceImgName = getPieceImgName(pieceStr);
+
+        gc.drawImage(ImageManager.getImage(pieceImgName), x, y, size, size);
+
     }
 
-    @Override
-    public PieceType getPromotionChoice() {
+
+
+    public String getPromotionChoice(boolean isWhite) {
         ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", "Queen", "Knight");
         dialog.setTitle("Pawn Promotion");
         dialog.setHeaderText("Choose piece for pawn promotion");
         dialog.setContentText("Select piece:");
 
         Optional<String> result = dialog.showAndWait();
+        if (isWhite) {
+            return result.map(choice
+                    -> choice.equals("Queen") ? "Q" : "K"
+            ).orElse("Q");
+        }
         return result.map(choice
-                -> choice.equals("Queen") ? PieceType.QUEEN : PieceType.KNIGHT
-        ).orElse(PieceType.QUEEN);
+                -> choice.equals("Queen") ? "q" : "k"
+        ).orElse("q");
+
+    }
+
+    private String getPieceImgName(String piece) {
+        String symbol = piece.substring(0, 1);
+        return switch (symbol) {
+            case "k" -> "kingW.png";
+            case "K" -> "kingB.png";
+            case "q" -> "queenW.png";
+            case "Q" -> "queenB.png";
+            case "r" -> "rookW.png";
+            case "R" -> "rookB.png";
+            case "b" -> "bishopW.png";
+            case "B" -> "bishopB.png";
+            case "n" -> "knightW.png";
+            case "N" -> "knightB.png";
+            case "p" -> "pawnW.png";
+            case "P" -> "pawnB.png";
+            default -> "";
+        };
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        // Executar na thread da UI
+        javafx.application.Platform.runLater(() -> {
+            String propName = evt.getPropertyName();
+
+            // Eventos do ChessGameManager
+            if (ChessGameManager.PROP_BOARD_STATE.equals(propName) ||
+                ChessGameManager.PROP_CURRENT_PLAYER.equals(propName)) {
+                draw(); // Redesenhar o tabuleiro quando o estado mudar
+            }
+            else if (ChessGameManager.PROP_CHECK_STATE.equals(propName)) {
+                draw(); // Atualiza o tabuleiro quando houver xeque
+                // destacar o rei em xeque
+                highlightCheck();
+            }
+        });
+    }
+
+    private void highlightCheck() {
+        boolean isWhiteInCheck = !gameManager.isWhitePlaying();
+
+        // Log para teste
+        ModelLog.getInstance().addEntry("Destaque visual para rei em xeque: " +
+                                     (isWhiteInCheck ? "Brancas" : "Pretas"));
+    }
+
+    public void cleanup() {
+        gameManager.removePropertyChangeListener(this);
+        ModelLog.getInstance().removePropertyChangeListener(this);
     }
 }

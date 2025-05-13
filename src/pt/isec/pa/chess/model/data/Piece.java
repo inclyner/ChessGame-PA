@@ -4,7 +4,6 @@ import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
 
-//TODO as peças têm acesso a board
 
 public class Piece implements Serializable {
     @Serial
@@ -47,4 +46,5 @@ public class Piece implements Serializable {
         // Override in specific piece classes (e.g., Pawn, Rook, etc.)
         return new ArrayList<>();
     }
+
 }

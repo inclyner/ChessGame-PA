@@ -12,7 +12,6 @@ public class ModelData {
         ChessGame game = new ChessGame();
         gameManager = new ChessGameManager(game, null); // Temporarily pass null
         boardFx = new BoardFx(gameManager);
-        gameManager.getBoard().setPromotionHandler(boardFx); // Set the handler after creation
     }
 
     public ChessGameManager getGameManager() {
