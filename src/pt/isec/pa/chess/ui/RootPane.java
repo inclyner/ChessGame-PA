@@ -23,7 +23,7 @@ public class RootPane extends BorderPane { //View-Controller
     Canvas canvas;
     Pane center;
     String whiteName, blackName;
-    private MenuItem miLogs; // 1. variável de instância
+    private MenuItem miLogs, miNotifications; // Adicione miNotifications
 
 
     // variables, including reference to views
@@ -120,6 +120,17 @@ public class RootPane extends BorderPane { //View-Controller
         gameManager.addPropertyChangeListener(evt -> {
             switch (evt.getPropertyName()) {
                 case ChessGameManager.PROP_BOARD_STATE, ChessGameManager.PROP_CURRENT_PLAYER -> update();
+                case ChessGameManager.PROP_GAME_OVER -> {
+                    update();
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Fim de Jogo");
+                    alert.setHeaderText("Jogo Terminado");
+                    alert.setContentText(evt.getNewValue().toString());
+                    alert.showAndWait();
+                }
+                case ChessGameManager.PROP_CHECK_STATE -> {
+                    update();
+                }
             }
         });
 
@@ -127,6 +138,11 @@ public class RootPane extends BorderPane { //View-Controller
         miLogs.setOnAction(e -> {
             LogWindow logWindow = new LogWindow();
             logWindow.show();
+        });
+        
+        miNotifications.setOnAction(e -> {
+            NotificationWindow notificationWindow = new NotificationWindow();
+            notificationWindow.show();
         });
     }
 
@@ -147,11 +163,12 @@ public class RootPane extends BorderPane { //View-Controller
         miExport = new MenuItem("Export");
         miQuit = new MenuItem("Quit");
         miLogs = new MenuItem("Logs");
-
+        miNotifications = new MenuItem("Notificações"); // Adicione esta linha
+        
         menuGame.getItems().addAll(
             miNew, miOpen, miSave, new SeparatorMenuItem(),
             miImport, miExport, new SeparatorMenuItem(),
-            miLogs,
+            miLogs, miNotifications, // Adicione miNotifications aqui
             miQuit
         );
 

@@ -84,6 +84,18 @@ public class Board implements Serializable {
         Square originalPosition = piece.getPosition();
         Piece targetPiece = getPieceAt(to.column(), to.row());
 
+        // Check for En Passant capture
+        boolean isEnPassantCapture = false;
+        if (piece instanceof Pawn && 
+            from.column() != to.column() && 
+            targetPiece == null) {
+            isEnPassantCapture = true;
+            int capturedPawnRow = from.row();
+            int capturedPawnCol = to.column();
+            targetPiece = getPieceAt(capturedPawnCol, capturedPawnRow);
+            board[capturedPawnCol][capturedPawnRow] = null; // Remove captured pawn
+        }
+
         // Make the move temporarily
         board[to.column()][to.row()] = piece;
         board[from.column()][from.row()] = null;

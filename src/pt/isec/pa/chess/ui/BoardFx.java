@@ -7,15 +7,17 @@ import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import pt.isec.pa.chess.model.ChessGameManager;
+import pt.isec.pa.chess.model.ModelLog;
 
-
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Optional;
 
 import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
 
-public class BoardFx extends Canvas {
+public class BoardFx extends Canvas implements PropertyChangeListener {
 
     private ChessGameManager gameManager;
     private final Color LIGHT_SQUARE = Color.web("#f0d9b5");
@@ -34,6 +36,13 @@ public class BoardFx extends Canvas {
         setWidth(600);   // Match the window size
         setHeight(600);  // Match the window size
         BOARD_SIZE = gameManager.getBoardSize();
+
+        // Registrar para eventos do ChessGameManager
+        gameManager.addPropertyChangeListener(this);
+
+        // incluir ModelLog para reações a mudanças importantes
+        ModelLog.getInstance().addPropertyChangeListener(this);
+
         // Add mouse click event handler
         setOnMouseClicked(event -> {
             if (gameManager == null) {
@@ -361,5 +370,37 @@ public class BoardFx extends Canvas {
             case "P" -> "pawnB.png";
             default -> "";
         };
+    }
+
+    @Override
+    public void propertyChange(PropertyChangeEvent evt) {
+        // Executar na thread da UI
+        javafx.application.Platform.runLater(() -> {
+            String propName = evt.getPropertyName();
+
+            // Eventos do ChessGameManager
+            if (ChessGameManager.PROP_BOARD_STATE.equals(propName) ||
+                ChessGameManager.PROP_CURRENT_PLAYER.equals(propName)) {
+                draw(); // Redesenhar o tabuleiro quando o estado mudar
+            }
+            else if (ChessGameManager.PROP_CHECK_STATE.equals(propName)) {
+                draw(); // Atualiza o tabuleiro quando houver xeque
+                // destacar o rei em xeque
+                highlightCheck();
+            }
+        });
+    }
+
+    private void highlightCheck() {
+        boolean isWhiteInCheck = !gameManager.isWhitePlaying();
+
+        // Log para teste
+        ModelLog.getInstance().addEntry("Destaque visual para rei em xeque: " +
+                                     (isWhiteInCheck ? "Brancas" : "Pretas"));
+    }
+
+    public void cleanup() {
+        gameManager.removePropertyChangeListener(this);
+        ModelLog.getInstance().removePropertyChangeListener(this);
     }
 }

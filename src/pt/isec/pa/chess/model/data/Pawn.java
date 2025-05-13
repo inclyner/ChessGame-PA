@@ -47,15 +47,23 @@ public class Pawn extends Piece {
         if ((isWhite() && currentRow == 4) || (!isWhite() && currentRow == 3)) {
             Square lastMoveTo = board.getLastMoveTo();
             Piece lastMoved = board.getLastMovedPiece();
+            Square lastMoveFrom = board.getLastMoveFrom();
 
-            if (lastMoveTo != null && lastMoved instanceof Pawn) {
+            if (lastMoveTo != null && lastMoved instanceof Pawn && lastMoveFrom != null) {
                 int lastMoveCol = lastMoveTo.column();
 
-                // Check if last move was a two-square pawn advance next to this pawn
+                // Verificar se o ultimo movimento foi para a coluna adjacente
                 if (Math.abs(lastMoveCol - currentCol) == 1
                         && lastMoveTo.row() == currentRow
-                        && board.getLastMoveFrom().row() == (isWhite() ? 6 : 1)) {
-                    moves.add(new Square(lastMoveCol, currentRow + direction));
+                        && Math.abs(lastMoveFrom.row() - lastMoveTo.row()) == 2
+                        && board.getPieceAt(lastMoveCol, currentRow) != null
+                        && board.getPieceAt(lastMoveCol, currentRow).isWhite() != isWhite()) {
+
+                    Square enPassantTarget = new Square(lastMoveCol, currentRow + direction);
+                    if (board.isWithinBounds(enPassantTarget.column(), enPassantTarget.row())
+                        && board.getPieceAt(enPassantTarget.column(), enPassantTarget.row()) == null) {
+                        moves.add(enPassantTarget);
+                    }
                 }
             }
         }
