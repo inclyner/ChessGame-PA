@@ -44,7 +44,7 @@ public class Pawn extends Piece {
         }
 
         // En passant (only when conditions are met)
-        if ((isWhite() && currentRow == 4) || (!isWhite() && currentRow == 3)) {
+        if ((isWhite() && currentRow == 3) || (!isWhite() && currentRow == 4)) {
             Square lastMoveTo = board.getLastMoveTo();
             Piece lastMoved = board.getLastMovedPiece();
             Square lastMoveFrom = board.getLastMoveFrom();
@@ -75,7 +75,7 @@ public class Pawn extends Piece {
      * Checks if the pawn needs promotion (has reached the opposite end)
      */
     public boolean needsPromotion() {
-        return (isWhite() && position.row() == 7) || (!isWhite() && position.row() == 0);
+        return (isWhite() && position.row() == 0) || (!isWhite() && position.row() == 7);
     }
 
     public Piece promote(Board board, PieceType type) {

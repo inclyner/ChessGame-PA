@@ -11,6 +11,9 @@ public class ChessGame implements Serializable {
     private final Player blackPlayer;
     private boolean isGameOver = false;
     int BOARD_SIZE;
+    private boolean promotionPending = false;
+    private Square promotionSquare = null;
+    private PromotionHandler promotionHandler;
 
     public ChessGame() {
         board = new Board();
@@ -51,6 +54,22 @@ public class ChessGame implements Serializable {
             }
         }
 
+        Piece last = board.getLastMovedPiece();
+        if (last instanceof Pawn p && (p.isWhite() && p.getPosition().row() == 0 ||
+                !p.isWhite() && p.getPosition().row() == 7)) {
+            PieceType choice = promotionHandler.getPromotionChoice();
+            board.setPieceFromChar(
+                    promotionSquare.column(),
+                    promotionSquare.row(),
+                    switch(choice) {
+                        case QUEEN:  yield p.isWhite()? 'Q':'q';
+                        case ROOK:   yield p.isWhite()? 'R':'r';
+                        case BISHOP: yield p.isWhite()? 'B':'b';
+                        case KNIGHT: yield p.isWhite()? 'N':'n';
+                        default:     yield p.isWhite()? 'Q':'q';
+                    }
+            );
+        }
         // Move was successful, switch turns first
         switchTurn();
 
@@ -172,4 +191,11 @@ public class ChessGame implements Serializable {
     public int getBoardSize() {
         return BOARD_SIZE;
     }
+
+
+    public void setPromotionHandler(PromotionHandler handler) {
+        this.promotionHandler = handler;
+    }
+
+
 }

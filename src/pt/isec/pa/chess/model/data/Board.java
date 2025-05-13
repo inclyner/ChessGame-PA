@@ -35,12 +35,12 @@ public class Board implements Serializable {
         addPiece(PieceType.KNIGHT, false, 6, 0);
         addPiece(PieceType.ROOK, false, 7, 0);
 
-        // Peões brancos
+        // Peões pretos
         for (int col = 0; col < BOARD_SIZE; col++) {
             addPiece(PieceType.PAWN, false, col, 1);
         }
 
-        // Peões pretos
+        // Peões brancos
         for (int col = 0; col < BOARD_SIZE; col++) {
             addPiece(PieceType.PAWN, true, col, 6);
         }
@@ -90,6 +90,7 @@ public class Board implements Serializable {
             from.column() != to.column() && 
             targetPiece == null) {
             isEnPassantCapture = true;
+            System.out.println("En Passant capture detected");
             int capturedPawnRow = from.row();
             int capturedPawnCol = to.column();
             targetPiece = getPieceAt(capturedPawnCol, capturedPawnRow);
@@ -101,6 +102,7 @@ public class Board implements Serializable {
         board[from.column()][from.row()] = null;
         piece.setPosition(to);
 
+        
         // Check if move leaves or keeps own king in check
         boolean causesCheck = isPlayerInCheck(piece.isWhite());
 
