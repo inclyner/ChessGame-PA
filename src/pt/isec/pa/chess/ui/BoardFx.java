@@ -5,6 +5,7 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import pt.isec.pa.chess.model.ChessGameManager;
 
 
@@ -27,6 +28,7 @@ public class BoardFx extends Canvas {
     private Point selectedSquare = null;
     private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
     private int BOARD_SIZE;
+    private String whiteName, blackName;
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
         setWidth(600);   // Match the window size
@@ -51,6 +53,11 @@ public class BoardFx extends Canvas {
                 handleBoardClick(col, row);
             }
         });
+    }
+
+    public void setPlayerNames(String white, String black) {
+        this.whiteName = white;
+        this.blackName = black;
     }
 
     private void handleBoardClick(int col, int row) {
@@ -100,6 +107,9 @@ public class BoardFx extends Canvas {
                 } else {
                     // Invalid move - check if clicking another own piece
                     String pieceStr = gameManager.getPieceAt(col, row);
+                    if (pieceStr == null) {
+                        return;  // No piece at clicked square
+                    }
                     char pieceChar = pieceStr.charAt(0);
 
                     // Only allow selecting pieces that belong to current player
@@ -219,6 +229,27 @@ public class BoardFx extends Canvas {
 
     private void drawTurnIndicator(GraphicsContext gc) {
         boolean isWhiteTurn = gameManager.isWhitePlaying();
+
+
+        gc.setFill(Color.BLACK);
+
+        // Fonte para o jogador atual: bold
+        Font boldFont = Font.font("System", FontWeight.BOLD, 18);
+        Font normalFont = Font.font("System", FontWeight.NORMAL, 18);
+
+        // Coordenadas do topo
+        double centerY = 22;
+
+        // Nome do jogador branco à esquerda
+        gc.setFont(isWhiteTurn ? boldFont : normalFont);
+        gc.fillText(whiteName, getWidth() * 0.15, centerY);
+
+        // Nome do jogador preto à direita
+        gc.setFont(!isWhiteTurn ? boldFont : normalFont);
+        gc.fillText(blackName, getWidth() * 0.65, centerY);
+
+
+
         gc.setFill(isWhiteTurn ? PIECE_WHITE : PIECE_BLACK);
         gc.setStroke(Color.BLACK);
         gc.setLineWidth(2);

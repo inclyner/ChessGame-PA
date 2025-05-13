@@ -7,6 +7,8 @@ import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import pt.isec.pa.chess.model.ChessGameManager;
 
@@ -20,6 +22,9 @@ public class RootPane extends BorderPane { //View-Controller
     ChessGameManager gameManager;
     Canvas canvas;
     Pane center;
+    String whiteName, blackName;
+
+
     // variables, including reference to views
     public RootPane(ModelData data) {
         this.data = data;
@@ -48,8 +53,12 @@ public class RootPane extends BorderPane { //View-Controller
             AskName askName = new AskName(data);
             askName.showAndWait();
             AskName askName2 = new AskName(data);
-            askName2.showAndWait();  // Fixed
-            gameManager.startGame(askName.tfName.getText(), askName2.tfName.getText());
+            askName2.showAndWait();
+            whiteName=askName.tfName.getText();
+            blackName=askName2.tfName.getText();
+            ((BoardFx)canvas).setPlayerNames(whiteName, blackName);
+            gameManager.startGame(whiteName, blackName);
+
             update(); // dá refresh na tela
         });
 
@@ -107,6 +116,13 @@ public class RootPane extends BorderPane { //View-Controller
             miShowMoves.setDisable(false);
         });
 
+        gameManager.addPropertyChangeListener(evt -> {
+            switch (evt.getPropertyName()) {
+                case ChessGameManager.PROP_BOARD_STATE, ChessGameManager.PROP_CURRENT_PLAYER -> update();
+            }
+        });
+
+
     }
 
     private void update() {
@@ -150,4 +166,6 @@ public class RootPane extends BorderPane { //View-Controller
         menuBar.getMenus().addAll(menuGame, menuMode);
         return menuBar;
     }
+
+
 }

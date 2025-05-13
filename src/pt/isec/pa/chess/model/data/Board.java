@@ -68,29 +68,6 @@ public class Board implements Serializable {
         return true;
     }
 
-    public boolean removePiece(int column, int row) {
-        // checks if piece can be removed
-        if (board[column][row] != null && board[column][row].isKing()) {
-            return false;
-        }
-        board[column][row] = null;
-        return true;
-    }
-
-    public boolean movePiece(Piece piece, int column, int row, boolean isWhitePlaying) {
-        if (checkMove(piece, column, row, isWhitePlaying)) {
-            lastMoveFrom = piece.getPosition();
-            lastMoveTo = new Square(column, row);
-
-            piece.position = new Square(column, row);
-            piece.setHasMoved();
-            board[column][row] = piece;
-            return true;
-        }
-        return false;
-
-    }
-
     public boolean movePiece(Square from, Square to) {
         Piece piece = getPieceAt(from.column(), from.row());
         if (piece == null) {
@@ -173,18 +150,6 @@ public class Board implements Serializable {
         return false; // Move is not valid
     }
 
-    public boolean checkEndGame() {
-        // TODO implementar
-        return false;
-    }
-
-    public void clear() {
-        for (int column = 0; column <= BOARD_SIZE - 1; column++) {
-            for (int row = 0; row <= BOARD_SIZE - 1; row++) {
-                board[column][row] = null;
-            }
-        }
-    }
 
     @Override
     public String toString() {
@@ -312,29 +277,6 @@ public class Board implements Serializable {
         return null;
     }
 
-    public boolean isKingInCheck(boolean isWhite) {
-        // Find the king's position
-        Square kingPosition = null;
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            for (int row = 0; row < BOARD_SIZE; row++) {
-                Piece piece = getPieceAt(col, row);
-                if (piece instanceof King && piece.isWhite() == isWhite) {
-                    kingPosition = new Square(col, row);
-                    break;
-                }
-            }
-            if (kingPosition != null) {
-                break;
-            }
-        }
-
-        if (kingPosition == null) {
-            return false;
-        }
-
-        // Check if any opponent's piece can attack the king's position
-        return isSquareUnderAttack(kingPosition, isWhite);
-    }
 
     public boolean isSquareUnderAttack(Square square, boolean isWhite) {
         // Check if any opponent's piece can move to this square
