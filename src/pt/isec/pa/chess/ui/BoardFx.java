@@ -3,16 +3,22 @@ package pt.isec.pa.chess.ui;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
+import pt.isec.pa.chess.ui.Point;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import pt.isec.pa.chess.model.ChessGameManager;
 import pt.isec.pa.chess.model.ModelLog;
+import pt.isec.pa.chess.model.data.Board;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.List;
+import java.io.File;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
@@ -31,6 +37,10 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
     private int BOARD_SIZE;
     private String whiteName, blackName;
+    private boolean showMoves = false;
+    private boolean soundEnabled = true; // O som está ligado por default
+    private boolean isWhiteTurn = true; // Track the current turn
+
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
         setWidth(600);   // Match the window size
@@ -45,9 +55,6 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
 
         // Add mouse click event handler
         setOnMouseClicked(event -> {
-            if (gameManager == null) {
-                return;
-            }
 
             // Calculate board dimensions with padding
             final double padding = 30;
@@ -91,7 +98,8 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             if(gameManager.isWhitePlaying() && isLowerCase(pieceChar) || !gameManager.isWhitePlaying() && isUpperCase(pieceChar))
             {
                 selectedSquare = clickedSquare;
-                highlightPossibleMoves(col,row);
+                if (showMoves)
+                    highlightPossibleMoves(col,row);
                 draw();
             }
 
@@ -106,16 +114,24 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             }
 
             try {
-                // Attempt to move the piece
+                // Get the piece before moving for sound playback
+                String pieceStr = gameManager.getPieceAt(selectedSquare.x(), selectedSquare.y());
+
+                String destPieceBeforeMove = gameManager.getPieceAt(clickedSquare.x(), clickedSquare.y());
                 boolean moved = gameManager.move(selectedSquare, clickedSquare);
 
                 if (moved) {
+                    // Play sound sequence for the move
+                    if (pieceStr != null && soundEnabled) {
+                        playMoveSequence(pieceStr, selectedSquare, clickedSquare, destPieceBeforeMove);
+                    }
+                    
                     // Move successful
                     selectedSquare = null;
                     validMoves.clear();
                 } else {
                     // Invalid move - check if clicking another own piece
-                    String pieceStr = gameManager.getPieceAt(col, row);
+                    pieceStr = gameManager.getPieceAt(col, row);
                     if (pieceStr == null) {
                         return;  // No piece at clicked square
                     }
@@ -125,7 +141,9 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
                     if(gameManager.isWhitePlaying() && isLowerCase(pieceChar))
                     {
                         selectedSquare = clickedSquare;
-                        highlightPossibleMoves(col,row);
+                        if (showMoves)
+                            highlightPossibleMoves(col,row);
+
                     } else {
                         selectedSquare = null;
                         validMoves.clear();
@@ -266,71 +284,19 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
         gc.fillText(isWhiteTurn ? "White's turn" : "Black's turn", 10, getHeight() - 10);
     }
 
-    private void drawBoard() {
-        GraphicsContext gc = getGraphicsContext2D();
-        gc.clearRect(0, 0, getWidth(), getHeight());
-
-        // Add padding for coordinates
-        double padding = 30;
-        double effectiveCellSize = (Math.min(getWidth(), getHeight()) - 2 * padding) / BOARD_SIZE;
-
-        // Draw coordinates
-        gc.setFill(Color.BLACK);
-        gc.setFont(new Font(14));
-
-        // Draw column letters (A-H)
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            String letter = String.valueOf((char) ('A' + col));
-            gc.fillText(letter,
-                    padding + col * effectiveCellSize + effectiveCellSize / 2 - 5,
-                    getHeight() - padding / 3);
-        }
-
-        // Draw row numbers (1-8)
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            String number = String.valueOf(BOARD_SIZE - row);
-            gc.fillText(number,
-                    padding / 3,
-                    padding + row * effectiveCellSize + effectiveCellSize / 2 + 5);
-        }
-
-        // Draw board squares with offset for coordinates
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                gc.setFill((row + col) % 2 == 0 ? LIGHT_SQUARE : DARK_SQUARE);
-                gc.fillRect(
-                        padding + col * effectiveCellSize,
-                        padding + row * effectiveCellSize,
-                        effectiveCellSize,
-                        effectiveCellSize
-                );
-
-                // Draw pieces with the new offset
-                if (gameManager != null) {
-                    String pieceStr = gameManager.getPieceAt(col, row);
-                    if (pieceStr != null) {
-                        drawPiece(gc, pieceStr, col, row, effectiveCellSize, padding);
-                    }
-                }
-            }
-        }
-    }
 
     private void drawPiece(GraphicsContext gc, String pieceStr, int col, int row,
                            double cellSize, double padding) {
-        double x = padding + col * cellSize;
-        double y = padding + row * cellSize;
-
-        // Get piece type from the piece string
-
         double piecePadding = cellSize * 0.15;
         double size = cellSize - (2 * piecePadding);
 
+        // Center the image in the square
+        double x = padding + col * cellSize + (cellSize - size) / 2;
+        double y = padding + row * cellSize + (cellSize - size) / 2;
 
         String pieceImgName = getPieceImgName(pieceStr);
 
         gc.drawImage(ImageManager.getImage(pieceImgName), x, y, size, size);
-
     }
 
 
@@ -385,22 +351,116 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             }
             else if (ChessGameManager.PROP_CHECK_STATE.equals(propName)) {
                 draw(); // Atualiza o tabuleiro quando houver xeque
-                // destacar o rei em xeque
-                highlightCheck();
+            }
+
+            if (evt.getPropertyName().equals(ChessGameManager.PROP_CURRENT_PLAYER)) {
+                isWhiteTurn = gameManager.isWhitePlaying();
+                draw(); // Redraw with correct colors
             }
         });
     }
 
-    private void highlightCheck() {
-        boolean isWhiteInCheck = !gameManager.isWhitePlaying();
-
-        // Log para teste
-        ModelLog.getInstance().addEntry("Destaque visual para rei em xeque: " +
-                                     (isWhiteInCheck ? "Brancas" : "Pretas"));
-    }
 
     public void cleanup() {
         gameManager.removePropertyChangeListener(this);
         ModelLog.getInstance().removePropertyChangeListener(this);
+    }
+
+    public void setShowMoves(boolean b) {
+        showMoves = b;
+    }
+
+    public void setSoundEnabled(boolean enabled) {
+        soundEnabled = enabled;
+    }
+    
+    private void playMoveSequence(String pieceType, Point from, Point to, String destPieceBeforeMove) {
+    List<String> soundFiles = new ArrayList<>();
+
+    if (!gameManager.isWhitePlaying()) {
+        soundFiles.add("white.mp3");
+    } else {
+        soundFiles.add("black.mp3");
+    }
+
+    soundFiles.add(getPieceSoundFile(pieceType));
+
+    String fromCell = convertToAlgebraicNotation(from);
+    soundFiles.add(fromCell.substring(0, 1) + ".mp3");
+    soundFiles.add(fromCell.substring(1) + ".mp3");
+
+    // Only add "empty.mp3" if there was no piece before the move
+    if (destPieceBeforeMove != null) {
+        soundFiles.add("capture.mp3");
+    }
+
+    String toCell = convertToAlgebraicNotation(to);
+    soundFiles.add(toCell.substring(0, 1) + ".mp3");
+    soundFiles.add(toCell.substring(1) + ".mp3");
+
+    if (destPieceBeforeMove != null) {
+        // Add sound for the captured piece type
+        soundFiles.add(getPieceSoundFile(destPieceBeforeMove));
+    }
+
+    // Add sound for check or checkmate
+    Board.GameResult result = gameManager.getGame().getBoard().getGameResult();
+    if (result == Board.GameResult.WHITE_WINS || result == Board.GameResult.BLACK_WINS) {
+        //System.out.println("Detected CHECKMATE! Adding sound.");
+        soundFiles.add("checkmate.mp3");
+    } else {
+        // Check if the OPPONENT is in check after this move
+        boolean opponentInCheck = gameManager.getGame().getBoard().isPlayerInCheck(gameManager.isWhitePlaying());
+        if (opponentInCheck) {
+            //System.out.println("Detected CHECK! Adding sound.");
+            soundFiles.add("check.mp3");
+        }
+    }
+
+    playSoundSequence(soundFiles, 0);
+}
+
+    private String getPieceSoundFile(String pieceStr) {
+        char piece = Character.toLowerCase(pieceStr.charAt(0));
+        return switch (piece) {
+            case 'p' -> "pawn.mp3";
+            case 'r' -> "rook.mp3";
+            case 'n' -> "knight.mp3";
+            case 'b' -> "bishop.mp3";
+            case 'q' -> "queen.mp3";
+            case 'k' -> "king.mp3";
+            default -> "piece.mp3";
+        };
+    }
+
+    private void playSoundSequence(List<String> files, int idx) {
+        if (idx >= files.size()) return;
+        String basePath = "src/pt/isec/pa/chess/ui/res/sounds/en/";
+        File file = new File(basePath + files.get(idx));
+        if (!file.exists()) {
+            playSoundSequence(files, idx + 1); // Skip missing files
+            return;
+        }
+        Media media = new Media(file.toURI().toString());
+        MediaPlayer player = new MediaPlayer(media);
+        player.setOnEndOfMedia(() -> {
+            // Add a short pause after the origin cell (after index 2)
+            if (idx == 2) {
+                new Thread(() -> {
+                    try { Thread.sleep(250); } catch (InterruptedException ignored) {}
+                    javafx.application.Platform.runLater(() -> playSoundSequence(files, idx + 1));
+                }).start();
+            } else {
+                playSoundSequence(files, idx + 1);
+            }
+        });
+        player.play();
+    }
+
+    // Keep this method for algebraic notation
+    private String convertToAlgebraicNotation(Point p) {
+        char file = (char)('a' + p.x());
+        int rank = 8 - p.y();
+        return "" + file + rank;
     }
 }

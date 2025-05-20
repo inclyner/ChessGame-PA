@@ -3,9 +3,12 @@ package pt.isec.pa.chess.model;
 import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Square;
+import pt.isec.pa.chess.model.data.memento.ChessGameCaretaker;
 import pt.isec.pa.chess.ui.Point;
 import pt.isec.pa.chess.ui.PromotionHandler;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -21,6 +24,7 @@ public class ChessGameManager {
     public static final String PROP_GAME_OVER = "gameOver";
     public static final String PROP_CHECK_STATE = "checkState";
     String player1, player2;
+    private final ChessGameCaretaker caretaker;
 
 
 
@@ -29,6 +33,7 @@ public class ChessGameManager {
         this.promotionHandler = handler;
         this.game.getBoard().setPromotionHandler(handler);
         pcs = new PropertyChangeSupport(this);
+        this.caretaker = new ChessGameCaretaker(game);
     }
 
     public boolean startGame(String player1, String player2) {
@@ -51,7 +56,9 @@ public class ChessGameManager {
 
         // Verificar se há peça na posição de destino (para registrar captura)
         String pieceAtTarget = getPieceAt(to.x(), to.y());
-        
+
+        caretaker.save();
+
         if (game.move(fromSquare, toSquare)) {
             // Converter coordenadas para notação de xadrez (ex: e2-e4)
             String fromNotation = columnToLetter(from.x()) + (8 - from.y());
@@ -94,7 +101,7 @@ public class ChessGameManager {
                     }
                     break;
             }
-            
+
             pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
             pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
             return true;
@@ -108,14 +115,29 @@ public class ChessGameManager {
     }
 
     public void importGame(String gameState) {
-        game.importGame(gameState);
+        try {
+            game.importGame(gameState);
+            
+            // Atualizar a vista após importação bem-sucedida
+            pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+            pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+            
+            // Log de sucesso
+            ModelLog.getInstance().addEntry("Jogo importado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            // Log do erro
+            ModelLog.getInstance().addEntry("Erro ao importar jogo: " + e.getMessage());
+            
+            // Opcional: mostrar uma mensagem de erro para o usuário
+            new Alert(Alert.AlertType.ERROR,
+                     "Formato de jogo inválido.\nVerifique se o arquivo está no formato correto.",
+                     ButtonType.OK).showAndWait();
+        }
     }
 
     public String exportGame() {
         return game.exportGame();
     }
-
-
 
 
     public String getPieceAt(int col, int row) {
@@ -146,19 +168,37 @@ public class ChessGameManager {
         return game.getBoardSize();
     }
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
-            pcs.addPropertyChangeListener(listener);
-        }
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
-            pcs.removePropertyChangeListener(listener);
-        }
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
 
-        public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-            pcs.addPropertyChangeListener(propertyName, listener);
-        }
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(propertyName, listener);
+    }
 
-        public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-            pcs.removePropertyChangeListener(propertyName, listener);
-        }
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(propertyName, listener);
+    }
+
+//memento
+    public void undo() {
+        caretaker.undo();
+        pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+    }
+    public void redo() { 
+        caretaker.redo();
+        pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+    }
+    public boolean hasUndo() { return caretaker.hasUndo(); }
+    public boolean hasRedo() { return caretaker.hasRedo(); }
+
+    public ChessGame getGame() {
+        return game;
+    }
 }

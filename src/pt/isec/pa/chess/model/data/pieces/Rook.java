@@ -1,4 +1,7 @@
-package pt.isec.pa.chess.model.data;
+package pt.isec.pa.chess.model.data.pieces;
+
+import pt.isec.pa.chess.model.data.Board;
+import pt.isec.pa.chess.model.data.Square;
 
 import java.util.ArrayList;
 
