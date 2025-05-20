@@ -13,6 +13,11 @@ import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Optional;
+import java.util.List;
+import java.util.ArrayList;
+import java.io.File;
+import javafx.scene.media.Media;
+import javafx.scene.media.MediaPlayer;
 
 import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
@@ -105,16 +110,24 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             }
 
             try {
+                // Get the piece before moving for sound playback
+                String pieceStr = gameManager.getPieceAt(selectedSquare.x(), selectedSquare.y());
+                
                 // Attempt to move the piece
                 boolean moved = gameManager.move(selectedSquare, clickedSquare);
 
                 if (moved) {
+                    // Play sound sequence for the move
+                    if (pieceStr != null) {
+                        playMoveSequence(pieceStr, selectedSquare, clickedSquare);
+                    }
+                    
                     // Move successful
                     selectedSquare = null;
                     validMoves.clear();
                 } else {
                     // Invalid move - check if clicking another own piece
-                    String pieceStr = gameManager.getPieceAt(col, row);
+                    pieceStr = gameManager.getPieceAt(col, row);
                     if (pieceStr == null) {
                         return;  // No piece at clicked square
                     }
@@ -404,5 +417,69 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
 
     public void setShowMoves(boolean b) {
         showMoves = b;
+    }
+
+    
+    private void playMoveSequence(String pieceType, Point from, Point to) {
+        List<String> soundFiles = new ArrayList<>();
+
+        // Piece sound
+        soundFiles.add(getPieceSoundFile(pieceType));
+
+        // Origin cell (e.g., d7)
+        String fromCell = convertToAlgebraicNotation(from);
+        soundFiles.add(fromCell.substring(0, 1) + ".mp3"); // letter
+        soundFiles.add(fromCell.substring(1) + ".mp3");    // number
+
+        // Destination cell (e.g., f5)
+        String toCell = convertToAlgebraicNotation(to);
+        soundFiles.add(toCell.substring(0, 1) + ".mp3");   // letter
+        soundFiles.add(toCell.substring(1) + ".mp3");      // number
+
+        playSoundSequence(soundFiles, 0);
+    }
+
+    private String getPieceSoundFile(String pieceStr) {
+        char piece = Character.toLowerCase(pieceStr.charAt(0));
+        return switch (piece) {
+            case 'p' -> "pawn.mp3";
+            case 'r' -> "rook.mp3";
+            case 'n' -> "knight.mp3";
+            case 'b' -> "bishop.mp3";
+            case 'q' -> "queen.mp3";
+            case 'k' -> "king.mp3";
+            default -> "piece.mp3";
+        };
+    }
+
+    private void playSoundSequence(List<String> files, int idx) {
+        if (idx >= files.size()) return;
+        String basePath = "src/pt/isec/pa/chess/ui/res/sounds/en/";
+        File file = new File(basePath + files.get(idx));
+        if (!file.exists()) {
+            playSoundSequence(files, idx + 1); // Skip missing files
+            return;
+        }
+        Media media = new Media(file.toURI().toString());
+        MediaPlayer player = new MediaPlayer(media);
+        player.setOnEndOfMedia(() -> {
+            // Add a short pause after the origin cell (after index 2)
+            if (idx == 2) {
+                new Thread(() -> {
+                    try { Thread.sleep(250); } catch (InterruptedException ignored) {}
+                    javafx.application.Platform.runLater(() -> playSoundSequence(files, idx + 1));
+                }).start();
+            } else {
+                playSoundSequence(files, idx + 1);
+            }
+        });
+        player.play();
+    }
+
+    // Keep this method for algebraic notation
+    private String convertToAlgebraicNotation(Point p) {
+        char file = (char)('a' + p.x());
+        int rank = 8 - p.y();
+        return "" + file + rank;
     }
 }
