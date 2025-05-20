@@ -112,14 +112,14 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             try {
                 // Get the piece before moving for sound playback
                 String pieceStr = gameManager.getPieceAt(selectedSquare.x(), selectedSquare.y());
-                
-                // Attempt to move the piece
+
+                String destPieceBeforeMove = gameManager.getPieceAt(clickedSquare.x(), clickedSquare.y());
                 boolean moved = gameManager.move(selectedSquare, clickedSquare);
 
                 if (moved) {
                     // Play sound sequence for the move
                     if (pieceStr != null) {
-                        playMoveSequence(pieceStr, selectedSquare, clickedSquare);
+                        playMoveSequence(pieceStr, selectedSquare, clickedSquare, destPieceBeforeMove);
                     }
                     
                     // Move successful
@@ -420,24 +420,32 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     }
 
     
-    private void playMoveSequence(String pieceType, Point from, Point to) {
-        List<String> soundFiles = new ArrayList<>();
+    private void playMoveSequence(String pieceType, Point from, Point to, String destPieceBeforeMove) {
+    List<String> soundFiles = new ArrayList<>();
 
-        // Piece sound
-        soundFiles.add(getPieceSoundFile(pieceType));
-
-        // Origin cell (e.g., d7)
-        String fromCell = convertToAlgebraicNotation(from);
-        soundFiles.add(fromCell.substring(0, 1) + ".mp3"); // letter
-        soundFiles.add(fromCell.substring(1) + ".mp3");    // number
-
-        // Destination cell (e.g., f5)
-        String toCell = convertToAlgebraicNotation(to);
-        soundFiles.add(toCell.substring(0, 1) + ".mp3");   // letter
-        soundFiles.add(toCell.substring(1) + ".mp3");      // number
-
-        playSoundSequence(soundFiles, 0);
+    if (!gameManager.isWhitePlaying()) {
+        soundFiles.add("white.mp3");
+    } else {
+        soundFiles.add("black.mp3");
     }
+
+    soundFiles.add(getPieceSoundFile(pieceType));
+
+    String fromCell = convertToAlgebraicNotation(from);
+    soundFiles.add(fromCell.substring(0, 1) + ".mp3");
+    soundFiles.add(fromCell.substring(1) + ".mp3");
+
+    // Only add "empty.mp3" if there was no piece before the move
+    if (destPieceBeforeMove == null) {
+        soundFiles.add("empty.mp3");
+    }
+
+    String toCell = convertToAlgebraicNotation(to);
+    soundFiles.add(toCell.substring(0, 1) + ".mp3");
+    soundFiles.add(toCell.substring(1) + ".mp3");
+
+    playSoundSequence(soundFiles, 0);
+}
 
     private String getPieceSoundFile(String pieceStr) {
         char piece = Character.toLowerCase(pieceStr.charAt(0));
