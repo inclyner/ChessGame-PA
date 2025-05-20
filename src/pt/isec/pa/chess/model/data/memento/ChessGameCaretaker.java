@@ -21,14 +21,10 @@ public class ChessGameCaretaker {
         if (history.isEmpty()) return;
         redoHist.push(originator.save());
         originator.restore(history.pop());
-        redoHist.push(originator.save());
-        originator.restore(history.pop());
     }
 
     public void redo() {
         if (redoHist.isEmpty()) return;
-        history.push(originator.save());
-        originator.restore(redoHist.pop());
         history.push(originator.save());
         originator.restore(redoHist.pop());
     }

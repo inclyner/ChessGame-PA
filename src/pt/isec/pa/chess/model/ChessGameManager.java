@@ -100,7 +100,6 @@ public class ChessGameManager {
                     break;
             }
 
-            caretaker.save();
             pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
             pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
             return true;
