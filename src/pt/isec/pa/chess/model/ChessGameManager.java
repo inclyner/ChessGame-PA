@@ -3,6 +3,7 @@ package pt.isec.pa.chess.model;
 import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.model.data.Square;
+import pt.isec.pa.chess.model.data.memento.ChessGameCaretaker;
 import pt.isec.pa.chess.ui.Point;
 import pt.isec.pa.chess.ui.PromotionHandler;
 
@@ -21,6 +22,8 @@ public class ChessGameManager {
     public static final String PROP_GAME_OVER = "gameOver";
     public static final String PROP_CHECK_STATE = "checkState";
     String player1, player2;
+    private final ChessGameCaretaker caretaker;
+
 
 
     public ChessGameManager(ChessGame game, PromotionHandler handler) {
@@ -28,6 +31,7 @@ public class ChessGameManager {
         this.promotionHandler = handler;
         this.game.getBoard().setPromotionHandler(handler);
         pcs = new PropertyChangeSupport(this);
+        this.caretaker = new ChessGameCaretaker(game);
     }
 
     public boolean startGame(String player1, String player2) {
@@ -50,7 +54,9 @@ public class ChessGameManager {
 
         // Verificar se há peça na posição de destino (para registrar captura)
         String pieceAtTarget = getPieceAt(to.x(), to.y());
-        
+
+        caretaker.save();
+
         if (game.move(fromSquare, toSquare)) {
             // Converter coordenadas para notação de xadrez (ex: e2-e4)
             String fromNotation = columnToLetter(from.x()) + (8 - from.y());
@@ -93,7 +99,8 @@ public class ChessGameManager {
                     }
                     break;
             }
-            
+
+            caretaker.save();
             pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
             pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
             return true;
@@ -158,4 +165,17 @@ public class ChessGameManager {
     public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
         pcs.removePropertyChangeListener(propertyName, listener);
     }
+
+//memento
+    public void undo() {
+        caretaker.undo();
+        pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);}
+    public void redo() { caretaker.redo();
+        pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);}
+    public boolean hasUndo() { return caretaker.hasUndo(); }
+    public boolean hasRedo() { return caretaker.hasRedo(); }
+
+
 }

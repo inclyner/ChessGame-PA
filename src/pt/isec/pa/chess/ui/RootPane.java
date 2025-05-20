@@ -152,9 +152,17 @@ public class RootPane extends BorderPane { //View-Controller
         miShowMoves.setOnAction(e -> {
             ((BoardFx)canvas).setShowMoves(miShowMoves.isSelected());
         });
+
+        miUndo.setOnAction(e -> gameManager.undo());
+        miRedo.setOnAction(e -> gameManager.redo());
+
     }
 
     private void update() {
+        if(miLearning.isSelected()) {
+            miUndo.setDisable(!gameManager.hasUndo());
+            miRedo.setDisable(!gameManager.hasRedo());
+        }
         ((BoardFx)canvas).draw();
     }
 

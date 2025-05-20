@@ -1,14 +1,21 @@
 package pt.isec.pa.chess.model.data;
 
+import pt.isec.pa.chess.model.data.memento.IMemento;
+import pt.isec.pa.chess.model.data.memento.IOriginator;
+import pt.isec.pa.chess.model.data.memento.Memento;
+import pt.isec.pa.chess.model.data.pieces.Pawn;
+import pt.isec.pa.chess.model.data.pieces.Piece;
+import pt.isec.pa.chess.model.data.pieces.PieceType;
+
 import java.io.Serializable;
 
 //Facade
-public class ChessGame implements Serializable {
+public class ChessGame implements Serializable, IOriginator {
 
-    private final Board board;
+    private Board board;
     private Player currentPlayer;
-    private final Player whitePlayer;
-    private final Player blackPlayer;
+    private Player whitePlayer;
+    private Player blackPlayer;
     private boolean isGameOver = false;
     int BOARD_SIZE;
     private boolean promotionPending = false;
@@ -195,6 +202,27 @@ public class ChessGame implements Serializable {
 
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
+    }
+
+    @Override
+    public IMemento save() {
+        return new Memento(this);
+    }
+
+    @Override
+    public void restore(IMemento memento) {
+        Object snapshot = memento.getSnapshot();
+        if (snapshot instanceof ChessGame restored) {
+            this.board = restored.board;
+            this.currentPlayer = restored.currentPlayer;
+            this.whitePlayer = restored.whitePlayer;
+            this.blackPlayer = restored.blackPlayer;
+            this.isGameOver = restored.isGameOver;
+            this.BOARD_SIZE = restored.BOARD_SIZE;
+            this.promotionPending = restored.promotionPending;
+            this.promotionSquare = restored.promotionSquare;
+
+        }
     }
 
 

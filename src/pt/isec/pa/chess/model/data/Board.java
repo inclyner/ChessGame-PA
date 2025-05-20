@@ -3,6 +3,8 @@ package pt.isec.pa.chess.model.data;
 import java.io.Serial;
 import java.io.Serializable;
 import java.util.ArrayList;
+
+import pt.isec.pa.chess.model.data.pieces.*;
 import pt.isec.pa.chess.ui.PromotionHandler;
 
 public class Board implements Serializable {
@@ -86,7 +88,7 @@ public class Board implements Serializable {
 
         // Check for En Passant capture
         boolean isEnPassantCapture = false;
-        if (piece instanceof Pawn && 
+        if (piece instanceof Pawn &&
             from.column() != to.column() && 
             targetPiece == null) {
             isEnPassantCapture = true;

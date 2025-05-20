@@ -1,8 +1,10 @@
-package pt.isec.pa.chess.model.data;
+package pt.isec.pa.chess.model.data.pieces;
+
+import pt.isec.pa.chess.model.data.Square;
 
 public class PieceFactoryType {
 
-    static Piece createPiece( PieceType type, boolean isWhite, Square square) {
+    public static Piece createPiece(PieceType type, boolean isWhite, Square square) {
         return switch (type) {
             case KING -> new King(isWhite,square);
             case QUEEN -> new Queen(isWhite,square);

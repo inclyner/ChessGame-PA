@@ -1,9 +1,11 @@
-package pt.isec.pa.chess.model.data;
+package pt.isec.pa.chess.model.data.pieces;
 
+
+import pt.isec.pa.chess.model.data.Square;
 
 public class PieceFactoryTxt {
 
-    static Piece createPiece(char piece, Square position) {
+    public static Piece createPiece(char piece, Square position) {
         return switch (piece) {
             case 'K' -> new King( true,position);
             case 'Q' -> new Queen( true,position);
