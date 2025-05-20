@@ -23,7 +23,6 @@ public class ChessGameManager {
     String player1, player2;
 
 
-
     public ChessGameManager(ChessGame game, PromotionHandler handler) {
         this.game = game;
         this.promotionHandler = handler;
@@ -116,8 +115,6 @@ public class ChessGameManager {
     }
 
 
-
-
     public String getPieceAt(int col, int row) {
         if(game.getBoard().getPieceAt(col, row)!= null) {
             return game.getBoard().getPieceAt(col, row).toString();
@@ -146,19 +143,19 @@ public class ChessGameManager {
         return game.getBoardSize();
     }
 
-        public void addPropertyChangeListener(PropertyChangeListener listener) {
-            pcs.addPropertyChangeListener(listener);
-        }
+    public void addPropertyChangeListener(PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(listener);
+    }
 
-        public void removePropertyChangeListener(PropertyChangeListener listener) {
-            pcs.removePropertyChangeListener(listener);
-        }
+    public void removePropertyChangeListener(PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(listener);
+    }
 
-        public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-            pcs.addPropertyChangeListener(propertyName, listener);
-        }
+    public void addPropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.addPropertyChangeListener(propertyName, listener);
+    }
 
-        public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
-            pcs.removePropertyChangeListener(propertyName, listener);
-        }
+    public void removePropertyChangeListener(String propertyName, PropertyChangeListener listener) {
+        pcs.removePropertyChangeListener(propertyName, listener);
+    }
 }

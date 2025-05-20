@@ -31,6 +31,7 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     private ArrayList<Point> validMoves = new ArrayList<>(); // Store valid moves for highlighting
     private int BOARD_SIZE;
     private String whiteName, blackName;
+    private boolean showMoves = false;
     public BoardFx(ChessGameManager gameManager) {
         this.gameManager = gameManager;
         setWidth(600);   // Match the window size
@@ -45,9 +46,6 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
 
         // Add mouse click event handler
         setOnMouseClicked(event -> {
-            if (gameManager == null) {
-                return;
-            }
 
             // Calculate board dimensions with padding
             final double padding = 30;
@@ -91,7 +89,8 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
             if(gameManager.isWhitePlaying() && isLowerCase(pieceChar) || !gameManager.isWhitePlaying() && isUpperCase(pieceChar))
             {
                 selectedSquare = clickedSquare;
-                highlightPossibleMoves(col,row);
+                if (showMoves)
+                    highlightPossibleMoves(col,row);
                 draw();
             }
 
@@ -125,7 +124,9 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
                     if(gameManager.isWhitePlaying() && isLowerCase(pieceChar))
                     {
                         selectedSquare = clickedSquare;
-                        highlightPossibleMoves(col,row);
+                        if (showMoves)
+                            highlightPossibleMoves(col,row);
+
                     } else {
                         selectedSquare = null;
                         validMoves.clear();
@@ -402,5 +403,9 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     public void cleanup() {
         gameManager.removePropertyChangeListener(this);
         ModelLog.getInstance().removePropertyChangeListener(this);
+    }
+
+    public void setShowMoves(boolean b) {
+        showMoves = b;
     }
 }

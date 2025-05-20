@@ -17,13 +17,14 @@ import java.io.File;
 public class RootPane extends BorderPane { //View-Controller
     ModelData data;
     MenuBar menuBar;
-    MenuItem miNew, miOpen, miSave, miImport, miExport,miShowMoves, miQuit,miUndo,miRedo;
+    MenuItem miNew, miOpen, miSave, miImport, miExport, miQuit,miUndo,miRedo;
+    CheckMenuItem miShowMoves;
     RadioMenuItem miNormal, miLearning;
     ChessGameManager gameManager;
     Canvas canvas;
     Pane center;
     String whiteName, blackName;
-    private MenuItem miLogs, miNotifications; // Adicione miNotifications
+    private MenuItem miLogs, miNotifications;
 
 
     // variables, including reference to views
@@ -38,8 +39,11 @@ public class RootPane extends BorderPane { //View-Controller
     private void createViews() {
         setTop(createMenu());
         center = new Pane();
+
         setCenter(center);
-        
+
+
+
         canvas = new BoardFx(gameManager);
         center.getChildren().add(canvas);
         
@@ -144,6 +148,10 @@ public class RootPane extends BorderPane { //View-Controller
             NotificationWindow notificationWindow = new NotificationWindow();
             notificationWindow.show();
         });
+
+        miShowMoves.setOnAction(e -> {
+            ((BoardFx)canvas).setShowMoves(miShowMoves.isSelected());
+        });
     }
 
     private void update() {
@@ -163,12 +171,12 @@ public class RootPane extends BorderPane { //View-Controller
         miExport = new MenuItem("Export");
         miQuit = new MenuItem("Quit");
         miLogs = new MenuItem("Logs");
-        miNotifications = new MenuItem("Notificações"); // Adicione esta linha
+        miNotifications = new MenuItem("Notificações");
         
         menuGame.getItems().addAll(
             miNew, miOpen, miSave, new SeparatorMenuItem(),
             miImport, miExport, new SeparatorMenuItem(),
-            miLogs, miNotifications, // Adicione miNotifications aqui
+            miLogs, miNotifications,
             miQuit
         );
 
@@ -179,9 +187,9 @@ public class RootPane extends BorderPane { //View-Controller
         ToggleGroup toggleMode = new ToggleGroup();
         miNormal.setToggleGroup(toggleMode);
         miLearning.setToggleGroup(toggleMode);
-        miNormal.setSelected(true); // default
+        miNormal.setSelected(true);
 
-        miShowMoves = new MenuItem("Show possible moves");
+        miShowMoves = new CheckMenuItem("Show possible moves");
         miUndo = new MenuItem("Undo");
         miRedo = new MenuItem("Redo");
         miShowMoves.setDisable(true);
