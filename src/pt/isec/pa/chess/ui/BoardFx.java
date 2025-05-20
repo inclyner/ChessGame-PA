@@ -319,19 +319,16 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
 
     private void drawPiece(GraphicsContext gc, String pieceStr, int col, int row,
                            double cellSize, double padding) {
-        double x = padding + col * cellSize;
-        double y = padding + row * cellSize;
-
-        // Get piece type from the piece string
-
         double piecePadding = cellSize * 0.15;
         double size = cellSize - (2 * piecePadding);
 
+        // Center the image in the square
+        double x = padding + col * cellSize + (cellSize - size) / 2;
+        double y = padding + row * cellSize + (cellSize - size) / 2;
 
         String pieceImgName = getPieceImgName(pieceStr);
 
         gc.drawImage(ImageManager.getImage(pieceImgName), x, y, size, size);
-
     }
 
 
