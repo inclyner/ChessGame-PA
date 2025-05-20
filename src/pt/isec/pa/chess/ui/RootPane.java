@@ -11,8 +11,15 @@ import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.FileChooser;
 import pt.isec.pa.chess.model.ChessGameManager;
+import pt.isec.pa.chess.model.ModelLog;
 
 import java.io.File;
+import java.io.PrintWriter;
+import javafx.scene.control.Alert;
+
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 
 public class RootPane extends BorderPane { //View-Controller
     ModelData data;
@@ -25,6 +32,8 @@ public class RootPane extends BorderPane { //View-Controller
     Pane center;
     String whiteName, blackName;
     private MenuItem miLogs, miNotifications;
+    private CheckMenuItem miSound;
+    private boolean soundEnabled = true;
 
 
     // variables, including reference to views
@@ -50,6 +59,11 @@ public class RootPane extends BorderPane { //View-Controller
         // Just use bindings, don't set the size directly
         canvas.widthProperty().bind(center.widthProperty());
         canvas.heightProperty().bind(center.heightProperty());
+
+        miSound.setSelected(true); // Sound on by default
+        miSound.setOnAction(e -> {
+            ((BoardFx)canvas).setSoundEnabled(miSound.isSelected());
+        });
     }
 
     private void registerHandlers() {
@@ -97,12 +111,90 @@ public class RootPane extends BorderPane { //View-Controller
         });
 
         miImport.setOnAction(e -> {
-            AskName askName = new AskName(data);
-            askName.showAndWait();
-            gameManager.importGame(askName.tfName.getText());
+            // Show file open dialog
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Load Chess Game");
+            fileChooser.setInitialDirectory(new File("."));
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("All Files", "*.*")
+            );
+            
+            File file = fileChooser.showOpenDialog(this.getScene().getWindow());
+            if (file != null) {
+                try {
+                    // Read the entire file content
+                    StringBuilder content = new StringBuilder();
+                    try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            content.append(line).append("\n");
+                        }
+                    }
+                    
+                    String gameData = content.toString();
+                    if (gameData.endsWith("\n")) {
+                        gameData = gameData.substring(0, gameData.length() - 1);
+                    }
+                    
+                    // Import the game data
+                    gameManager.importGame(gameData);
+                    
+                    // Show success message
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Game Imported");
+                    alert.setHeaderText("Game loaded successfully");
+                    alert.setContentText("Jogo importado de: " + file.getName());
+                    alert.showAndWait();
+                    
+                    // Add log entry
+                    ModelLog.getInstance().addEntry("Jogo importado de: " + file.getName());
+                    
+                } catch (IOException ex) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Import Error");
+                    alert.setHeaderText("Erro a importar jogo");
+                    alert.setContentText("Could not read file: " + ex.getMessage());
+                    alert.showAndWait();
+                }
+            }
         });
         miExport.setOnAction(e -> {
-            gameManager.exportGame();
+            // Get the exported game string
+            String exportedGame = gameManager.exportGame();
+            
+            // Show file save dialog
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Save Game");
+            fileChooser.setInitialDirectory(new File("."));
+            fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("All Files", "*.*")
+            );
+            
+            File file = fileChooser.showSaveDialog(this.getScene().getWindow());
+            if (file != null) {
+                try (PrintWriter writer = new PrintWriter(file)) {
+                    writer.print(exportedGame);
+                    
+                    // Show success message
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Game Exported");
+                    alert.setHeaderText("Game saved successfully");
+                    alert.setContentText("Jogo exportado para: " + file.getAbsolutePath());
+                    alert.showAndWait();
+                    
+                    // Add log entry
+                    ModelLog.getInstance().addEntry("Jogo exportado para: " + file.getName());
+                } catch (Exception ex) {
+                    // Show error message if saving fails
+                    Alert alert = new Alert(Alert.AlertType.ERROR);
+                    alert.setTitle("Export Error");
+                    alert.setHeaderText("Error a exportar o jogo");
+                    alert.setContentText(ex.getMessage());
+                    alert.showAndWait();
+                }
+            }
         });
         miQuit.setOnAction(actionEvent -> {
             Platform.exit();
@@ -179,12 +271,15 @@ public class RootPane extends BorderPane { //View-Controller
         miExport = new MenuItem("Export");
         miQuit = new MenuItem("Quit");
         miLogs = new MenuItem("Logs");
-        miNotifications = new MenuItem("Notificações");
-        
+        miNotifications = new MenuItem("Notifications");
+        miSound = new CheckMenuItem("Sound");
+
         menuGame.getItems().addAll(
             miNew, miOpen, miSave, new SeparatorMenuItem(),
             miImport, miExport, new SeparatorMenuItem(),
             miLogs, miNotifications,
+            new SeparatorMenuItem(),
+            miSound,
             miQuit
         );
 

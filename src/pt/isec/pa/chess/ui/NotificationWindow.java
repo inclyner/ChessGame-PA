@@ -51,7 +51,7 @@ public class NotificationWindow extends Stage implements PropertyChangeListener 
         Label lblTitle = new Label("Monitor de Notificações");
         lblTitle.setFont(Font.font("System", FontWeight.BOLD, 16));
         
-        lblStatus = new Label("Monitorando: Logs e Eventos de Jogo");
+        lblStatus = new Label("A monitorizar: Logs e Eventos de Jogo");
         lblStatus.setFont(Font.font("System", FontWeight.NORMAL, 12));
         lblStatus.setTextFill(Color.GRAY);
         
@@ -155,13 +155,13 @@ public class NotificationWindow extends Stage implements PropertyChangeListener 
     // Atualiza o label de status com base nos filtros
     private void updateStatusLabel() {
         if (showLogs && showGameEvents) {
-            lblStatus.setText("Monitorando: Logs e Eventos de Jogo");
+            lblStatus.setText("A monitorizar: Logs e Eventos de Jogo");
         } else if (showLogs) {
-            lblStatus.setText("Monitorando: Apenas Logs");
+            lblStatus.setText("A monitorizar: Apenas Logs");
         } else if (showGameEvents) {
-            lblStatus.setText("Monitorando: Apenas Eventos de Jogo");
+            lblStatus.setText("A monitorizar: Apenas Eventos de Jogo");
         } else {
-            lblStatus.setText("Monitorização desativado");
+            lblStatus.setText("Monitorização desativada");
         }
     }
     

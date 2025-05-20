@@ -228,6 +228,12 @@ public class Board implements Serializable {
         board[col][row] = piece;
     }
 
+    public void setPiece(int col, int row, Piece piece) {
+        if (isWithinBounds(col, row)) {
+            board[col][row] = piece;
+        }
+    }
+
     public boolean isWithinBounds(int col, int row) {
         return col >= 0 && col < BOARD_SIZE && row >= 0 && row < BOARD_SIZE;
     }
@@ -407,5 +413,13 @@ public class Board implements Serializable {
             }
         }
         return false;
+    }
+
+    public void clearBoard() {
+        for (int row = 0; row < getBoardSize(); row++) {
+            for (int col = 0; col < getBoardSize(); col++) {
+                setPiece(col, row, null);
+            }
+        }
     }
 }

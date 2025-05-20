@@ -7,6 +7,8 @@ import pt.isec.pa.chess.model.data.memento.ChessGameCaretaker;
 import pt.isec.pa.chess.ui.Point;
 import pt.isec.pa.chess.ui.PromotionHandler;
 
+import javafx.scene.control.Alert;
+import javafx.scene.control.ButtonType;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -113,7 +115,24 @@ public class ChessGameManager {
     }
 
     public void importGame(String gameState) {
-        game.importGame(gameState);
+        try {
+            game.importGame(gameState);
+            
+            // Atualizar a vista após importação bem-sucedida
+            pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
+            pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+            
+            // Log de sucesso
+            ModelLog.getInstance().addEntry("Jogo importado com sucesso.");
+        } catch (IllegalArgumentException e) {
+            // Log do erro
+            ModelLog.getInstance().addEntry("Erro ao importar jogo: " + e.getMessage());
+            
+            // Opcional: mostrar uma mensagem de erro para o usuário
+            new Alert(Alert.AlertType.ERROR,
+                     "Formato de jogo inválido.\nVerifique se o arquivo está no formato correto.",
+                     ButtonType.OK).showAndWait();
+        }
     }
 
     public String exportGame() {
@@ -169,12 +188,17 @@ public class ChessGameManager {
     public void undo() {
         caretaker.undo();
         pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
-        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);}
-    public void redo() { caretaker.redo();
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+    }
+    public void redo() { 
+        caretaker.redo();
         pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
-        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);}
+        pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, null);
+    }
     public boolean hasUndo() { return caretaker.hasUndo(); }
     public boolean hasRedo() { return caretaker.hasRedo(); }
 
-
+    public ChessGame getGame() {
+        return game;
+    }
 }

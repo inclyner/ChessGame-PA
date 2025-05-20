@@ -105,21 +105,34 @@ public class ChessGame implements Serializable, IOriginator {
 
     public void importGame(String gameState) {
         String[] lines = gameState.split("\n");
-        if (lines.length < 10) // 1 turn line + 8 board lines + 2 player names
-        {
+        if (lines.length < 10) { // Need at least current player + 8 rows + 1 player name
             throw new IllegalArgumentException("Invalid game state format");
         }
 
-        // Set current turn
-        currentPlayer = lines[0].equals("W") ? whitePlayer : blackPlayer;
+        // Clear the current board
+        board.clearBoard();
+        
+        // Set the current player based on first line
+        String playerTurn = lines[0].trim();
+        if ("W".equals(playerTurn)) {
+            currentPlayer = whitePlayer;
+        } else if ("B".equals(playerTurn)) {
+            currentPlayer = blackPlayer;
+        } else {
+            throw new IllegalArgumentException("Invalid player turn indicator: " + playerTurn);
+        }
 
-        // Import board state
-        for (int row = 0; row < BOARD_SIZE; row++) {
-            String boardRow = lines[row + 1];
-            for (int col = 0; col < BOARD_SIZE; col++) {
-                char pieceChar = boardRow.charAt(col);
+        // Import board state (mantendo a orientação do tabuleiro)
+        for (int row = 0; row < 8; row++) {
+            if (lines[row+1].length() < 8) {
+                throw new IllegalArgumentException("Invalid board row: " + (row+1));
+            }
+            
+            for (int col = 0; col < 8; col++) {
+                char pieceChar = lines[row+1].charAt(col);
                 if (pieceChar != '.') {
-                    board.setPieceFromChar(col, row, pieceChar);
+                    Piece piece = createPieceFromChar(pieceChar, col, row);
+                    board.setPiece(col, row, piece);
                 }
             }
         }
@@ -142,8 +155,13 @@ public class ChessGame implements Serializable, IOriginator {
                 if (piece == null) {
                     export.append(".");
                 } else {
-                    // Uppercase for white pieces, lowercase for black
-                    export.append(piece.toString());
+                    
+                    String pieceChar = piece.toString();
+                    if (piece.isWhite()) {
+                        export.append(pieceChar.toLowerCase());
+                    } else {
+                        export.append(pieceChar.toUpperCase());
+                    }
                 }
             }
             export.append("\n");
@@ -222,6 +240,21 @@ public class ChessGame implements Serializable, IOriginator {
             this.promotionPending = restored.promotionPending;
             this.promotionSquare = restored.promotionSquare;
 
+        }
+    }
+
+    private Piece createPieceFromChar(char pieceChar, int col, int row) {
+        boolean isWhite = Character.isLowerCase(pieceChar);
+        char type = Character.toUpperCase(pieceChar);
+        Square pos = new Square(col, row);
+        switch (type) {
+            case 'P': return new Pawn(isWhite, pos);
+            case 'R': return new pt.isec.pa.chess.model.data.pieces.Rook(isWhite, pos);
+            case 'N': return new pt.isec.pa.chess.model.data.pieces.Knight(isWhite, pos);
+            case 'B': return new pt.isec.pa.chess.model.data.pieces.Bishop(isWhite, pos);
+            case 'Q': return new pt.isec.pa.chess.model.data.pieces.Queen(isWhite, pos);
+            case 'K': return new pt.isec.pa.chess.model.data.pieces.King(isWhite, pos);
+            default: throw new IllegalArgumentException("Unknown piece type: " + pieceChar);
         }
     }
 
