@@ -92,6 +92,8 @@ public class RootPane extends BorderPane { //View-Controller
             File hFile = fileChooser.showOpenDialog(this.getScene().getWindow());
             if (hFile != null) {
                 System.out.println(hFile.getAbsolutePath());
+                gameManager.loadGameSerial(hFile.getAbsolutePath());
+                update();
 
 
             }
@@ -107,6 +109,7 @@ public class RootPane extends BorderPane { //View-Controller
             File hFile = fileChooser.showSaveDialog(this.getScene().getWindow());
             if (hFile != null) {
                 System.out.println(hFile.getAbsolutePath());
+                gameManager.saveGameSerial(hFile.getAbsolutePath());
             }
         });
 

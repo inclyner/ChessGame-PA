@@ -141,35 +141,10 @@ public class Board implements Serializable {
         return true;
     }
 
-    public boolean checkMove(Piece piece, int column, int row, boolean isWhitePlaying) {
-        // Validate input
-        if (piece == null || piece.isWhite() != isWhitePlaying) {
-            return false; // Invalid piece or not the current player's turn
-        }
-
-        if (!isWithinBounds(column, row)) {
-            return false;
-        }
-
-        ArrayList<Square> possibleMoves = piece.getMoves(this);
-
-        // Verifica se o movimento é válido
-        for (Square move : possibleMoves) {
-            if (move.column() == column && move.row() == row) {
-                // Verifica se o move deixa o jogador em check
-                if (!wouldCauseSelfCheck(piece, column, row)) {
-                    return true;
-                }
-            }
-        }
-
-        return false; // Move is not valid
-    }
-
 
     @Override
     public String toString() {
-        StringBuffer buffer = new StringBuffer(); // thread safe for multiple games
+        StringBuilder buffer = new StringBuilder(); // thread safe for multiple games
         char[][] positions = {{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, {'8', '7', '6', '5', '4', '3', '2', '1'}};
         for (int column = 0; column <= BOARD_SIZE - 1; column++) {
             for (int row = 0; row <= BOARD_SIZE - 1; row++) {
@@ -182,26 +157,6 @@ public class Board implements Serializable {
             }
         }
         return buffer.toString();
-    }
-
-    public void importGame(String boardString) {
-        String[] splitboard = boardString.split(",");
-        char[][] positions = {{'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h'}, {'8', '7', '6', '5', '4', '3', '2', '1'}};
-
-        for (String piece : splitboard) {
-            char pieceChar = piece.charAt(0);
-            char columnChar = piece.charAt(1);
-            char rowChar = piece.charAt(2);
-            int columnIndex = columnChar - 'a'; //
-            int rowIndex = 8 - Character.getNumericValue(rowChar); // linha 8 → índice 0
-            Square position = new Square(columnIndex, rowIndex);
-            Piece p = PieceFactoryTxt.createPiece(pieceChar, position);
-            if ((pieceChar == 'r' || pieceChar == 'R' || pieceChar == 'k' || pieceChar == 'K') && piece.length() != 4) {
-                p.setHasMoved();
-            }
-
-            board[columnIndex][rowIndex] = p;
-        }
     }
 
     public void setPieceFromChar(int col, int row, char pieceChar) {
@@ -316,17 +271,6 @@ public class Board implements Serializable {
         return false;
     }
 
-    private ArrayList<Piece> getAllPieces() {
-        ArrayList<Piece> pieces = new ArrayList<>();
-        for (int col = 0; col < BOARD_SIZE; col++) {
-            for (int row = 0; row < BOARD_SIZE; row++) {
-                if (board[col][row] != null) {
-                    pieces.add(board[col][row]);
-                }
-            }
-        }
-        return pieces;
-    }
 
     public Square getLastMoveFrom() {
         return lastMoveFrom;

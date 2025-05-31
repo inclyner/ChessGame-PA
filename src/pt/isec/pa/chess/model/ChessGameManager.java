@@ -201,4 +201,20 @@ public class ChessGameManager {
     public ChessGame getGame() {
         return game;
     }
+
+    public void loadGameSerial(String path) {
+        ChessGame loaded = ChessGame.loadGameSerial(path);
+        if (loaded != null) {
+            this.game = loaded;
+            pcs.firePropertyChange(PROP_BOARD_STATE, null, game.getBoard());
+            pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, game.getCurrentPlayer());
+            if (game.isGameOver())
+                pcs.firePropertyChange(PROP_GAME_OVER, null, game.getGameStatus());
+        }
+    }
+
+    public void saveGameSerial(String absolutePath) {
+        game.saveGameSerial(absolutePath);
+
+    }
 }

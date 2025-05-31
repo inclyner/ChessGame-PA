@@ -7,7 +7,7 @@ import pt.isec.pa.chess.model.data.pieces.Pawn;
 import pt.isec.pa.chess.model.data.pieces.Piece;
 import pt.isec.pa.chess.model.data.pieces.PieceType;
 
-import java.io.Serializable;
+import java.io.*;
 
 //Facade
 public class ChessGame implements Serializable, IOriginator {
@@ -217,7 +217,6 @@ public class ChessGame implements Serializable, IOriginator {
         return BOARD_SIZE;
     }
 
-
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
     }
@@ -258,5 +257,27 @@ public class ChessGame implements Serializable, IOriginator {
         }
     }
 
+
+    public static ChessGame loadGameSerial(String absolutePath) {
+        try (ObjectInputStream ois = new ObjectInputStream(new FileInputStream(absolutePath))) {
+            ChessGame game = (ChessGame) ois.readObject();
+            System.out.println("Jogo carregado com sucesso de: " + absolutePath);
+            return game;
+        } catch (IOException | ClassNotFoundException e) {
+            System.err.println("Erro ao carregar o jogo: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public void saveGameSerial(String absolutePath) {
+        try (ObjectOutputStream oos = new ObjectOutputStream(new FileOutputStream(absolutePath))) {
+            oos.writeObject(this);
+            System.out.println("Jogo guardado com sucesso em: " + absolutePath);
+        } catch (IOException e) {
+            System.err.println("Erro ao guardar o jogo: " + e.getMessage());
+            e.printStackTrace();
+        }
+    }
 
 }
