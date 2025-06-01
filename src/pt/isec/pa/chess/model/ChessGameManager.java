@@ -156,7 +156,6 @@ public class ChessGameManager {
     }
 
     public ArrayList<Point> getValidMovesAt(int col, int row) {
-        //convert ArrayList<Square> to ArrayList<Point>
         return game.getValidMovesAt(col,row);
     }
 
