@@ -77,7 +77,7 @@ public class ChessGameManager {
             }
             
             // Verificar estado do jogo após movimento
-            Board.GameResult result = game.getBoard().getGameResult();
+            ChessGame.GameResult result = game.getGameResult();
             switch (result) {
                 case WHITE_WINS:
                     ModelLog.getInstance().addEntry("XEQUE-MATE! Brancas (" + player1 + ") vencem.");
@@ -93,7 +93,7 @@ public class ChessGameManager {
                     break;
                 case IN_PROGRESS:
                     // Check for check
-                    if (game.getBoard().isPlayerInCheck(!isWhitePlaying())) {
+                    if (game.isPlayerInCheck(!isWhitePlaying())) {
                         ModelLog.getInstance().addEntry("XEQUE! " + 
                             (isWhitePlaying() ? "Pretas" : "Brancas") + " em xeque.");
                         pcs.firePropertyChange(PROP_CHECK_STATE, null, 
@@ -141,8 +141,8 @@ public class ChessGameManager {
 
 
     public String getPieceAt(int col, int row) {
-        if(game.getBoard().getPieceAt(col, row)!= null) {
-            return game.getBoard().getPieceAt(col, row).toString();
+        if(game.getPieceAt(col, row)!= null) {
+            return game.getPieceAt(col, row).toString();
         }
         return null;
     }
@@ -157,11 +157,7 @@ public class ChessGameManager {
 
     public ArrayList<Point> getValidMovesAt(int col, int row) {
         //convert ArrayList<Square> to ArrayList<Point>
-        ArrayList<Point> validMoves = new ArrayList<>();
-        for (Square square : game.getBoard().getPieceAt(col, row).getMoves(game.getBoard())) {
-            validMoves.add(new Point(square.column(), square.row()));
-        }
-        return validMoves;
+        return game.getValidMovesAt(col,row);
     }
 
     public int getBoardSize() {
@@ -184,7 +180,7 @@ public class ChessGameManager {
         pcs.removePropertyChangeListener(propertyName, listener);
     }
 
-//memento
+    //memento
     public void undo() {
         caretaker.undo();
         pcs.firePropertyChange(PROP_BOARD_STATE, null, null);
@@ -197,10 +193,7 @@ public class ChessGameManager {
     }
     public boolean hasUndo() { return caretaker.hasUndo(); }
     public boolean hasRedo() { return caretaker.hasRedo(); }
-
-    public ChessGame getGame() {
-        return game;
-    }
+    
 
     public void loadGameSerial(String path) {
         ChessGame loaded = ChessGame.loadGameSerial(path);
@@ -215,6 +208,15 @@ public class ChessGameManager {
 
     public void saveGameSerial(String absolutePath) {
         game.saveGameSerial(absolutePath);
+
+    }
+
+    public ChessGame.GameResult getGameResult() {
+        return game.getGameResult();
+    }
+
+    public boolean isPlayerInCheck(boolean whitePlaying) {
+        return game.isPlayerInCheck(whitePlaying);
 
     }
 }

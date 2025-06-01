@@ -119,7 +119,7 @@ public class RootPane extends BorderPane { //View-Controller
             fileChooser.setTitle("Load Chess Game");
             fileChooser.setInitialDirectory(new File("."));
             fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("Chess Game (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
             );
             
@@ -171,7 +171,7 @@ public class RootPane extends BorderPane { //View-Controller
             fileChooser.setTitle("Save Game");
             fileChooser.setInitialDirectory(new File("."));
             fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("Chess Game (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
             );
             

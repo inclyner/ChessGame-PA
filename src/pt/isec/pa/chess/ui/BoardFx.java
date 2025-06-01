@@ -3,6 +3,7 @@ package pt.isec.pa.chess.ui;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
+import pt.isec.pa.chess.model.data.ChessGame;
 import pt.isec.pa.chess.ui.Point;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -404,13 +405,13 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     }
 
     // Add sound for check or checkmate
-    Board.GameResult result = gameManager.getGame().getBoard().getGameResult();
-    if (result == Board.GameResult.WHITE_WINS || result == Board.GameResult.BLACK_WINS) {
+    ChessGame.GameResult result = gameManager.getGameResult();
+    if (result == ChessGame.GameResult.WHITE_WINS || result == ChessGame.GameResult.BLACK_WINS) {
         //System.out.println("Detected CHECKMATE! Adding sound.");
         soundFiles.add("checkmate.mp3");
     } else {
         // Check if the OPPONENT is in check after this move
-        boolean opponentInCheck = gameManager.getGame().getBoard().isPlayerInCheck(gameManager.isWhitePlaying());
+        boolean opponentInCheck = gameManager.isPlayerInCheck(gameManager.isWhitePlaying());
         if (opponentInCheck) {
             //System.out.println("Detected CHECK! Adding sound.");
             soundFiles.add("check.mp3");

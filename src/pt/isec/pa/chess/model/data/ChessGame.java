@@ -3,11 +3,11 @@ package pt.isec.pa.chess.model.data;
 import pt.isec.pa.chess.model.data.memento.IMemento;
 import pt.isec.pa.chess.model.data.memento.IOriginator;
 import pt.isec.pa.chess.model.data.memento.Memento;
-import pt.isec.pa.chess.model.data.pieces.Pawn;
-import pt.isec.pa.chess.model.data.pieces.Piece;
-import pt.isec.pa.chess.model.data.pieces.PieceType;
+import pt.isec.pa.chess.model.data.pieces.*;
+import pt.isec.pa.chess.ui.Point;
 
 import java.io.*;
+import java.util.ArrayList;
 
 //Facade
 public class ChessGame implements Serializable, IOriginator {
@@ -21,6 +21,7 @@ public class ChessGame implements Serializable, IOriginator {
     private boolean promotionPending = false;
     private Square promotionSquare = null;
     private PromotionHandler promotionHandler;
+
 
     public ChessGame() {
         board = new Board();
@@ -37,57 +38,97 @@ public class ChessGame implements Serializable, IOriginator {
     }
 
     public boolean move(Square from, Square to) {
-        if (isGameOver) {
-            return false; // Cannot make moves after game is over
-        }
+        if (isGameOver) return false;
 
         Piece piece = board.getPieceAt(from.column(), from.row());
+        if (piece == null || piece.isWhite() != currentPlayer.isWhite()) return false;
 
-        // Verify it's the correct player's turn
-        if (piece == null || piece.isWhite() != currentPlayer.isWhite()) {
+        ArrayList<Square> validMoves = piece.getMoves(board);
+        if (!validMoves.contains(to)) return false;
+
+        // Guarda estado atual
+        Square originalPosition = piece.getPosition();
+        Piece targetPiece = board.getPieceAt(to.column(), to.row());
+
+        // En Passant
+        boolean isEnPassantCapture = false;
+        if (piece instanceof Pawn &&
+                from.column() != to.column() &&
+                targetPiece == null) {
+
+            Piece lastMoved = board.getLastMovedPiece();
+            Square lastFrom = board.getLastMoveFrom();
+            Square lastTo = board.getLastMoveTo();
+
+            if (lastMoved instanceof Pawn &&
+                    lastFrom != null && lastTo != null &&
+                    Math.abs(lastTo.row() - lastFrom.row()) == 2 &&
+                    lastTo.column() == to.column() &&
+                    lastTo.row() == from.row()) {
+
+                isEnPassantCapture = true;
+                board.setPiece(lastTo.column(), lastTo.row(), null); // Remove o peão capturado
+            }
+        }
+
+
+        // Aplica movimento temporariamente
+        board.setPiece(to.column(), to.row(), piece);
+        board.setPiece(from.column(), from.row(), null);
+        piece.setPosition(to);
+
+        // Verifica se move deixa rei em xeque
+        if (isPlayerInCheck(piece.isWhite())) {
+            // Undo
+            board.setPiece(from.column(), from.row(), piece);
+            board.setPiece(to.column(), to.row(), targetPiece);
+            piece.setPosition(originalPosition);
             return false;
         }
 
-        // Check if player is in check and this move doesn't resolve it
-        if (board.isPlayerInCheck(currentPlayer.isWhite())) {
-            // Try the move - if it doesn't resolve check, it's invalid
-            if (!board.movePiece(from, to)) {
-                return false;
-            }
-        } else {
-            // Normal move when not in check
-            if (!board.movePiece(from, to)) {
-                return false;
+        // Roque
+        if (piece instanceof King && Math.abs(to.column() - from.column()) == 2) {
+            boolean kingside = to.column() > from.column();
+            int rookFromCol = kingside ? 7 : 0;
+            int rookToCol = kingside ? 5 : 3;
+
+            Piece rook = board.getPieceAt(rookFromCol, from.row());
+            if (rook instanceof Rook) {
+                board.setPiece(rookToCol, from.row(), rook);
+                board.setPiece(rookFromCol, from.row(), null);
+                rook.setPosition(new Square(rookToCol, from.row()));
+                rook.setHasMoved();
             }
         }
 
-        Piece last = board.getLastMovedPiece();
-        if (last instanceof Pawn p && (p.isWhite() && p.getPosition().row() == 0 ||
-                !p.isWhite() && p.getPosition().row() == 7)) {
+        piece.setHasMoved();
+        board.setLastMoveFrom(from);
+        board.setLastMoveTo(to);
+        board.setLastMovedPiece(piece);
+        // Promoção
+        if (piece instanceof Pawn p &&
+                (p.isWhite() && p.getPosition().row() == 0 || !p.isWhite() && p.getPosition().row() == 7)) {
+
             PieceType choice = promotionHandler.getPromotionChoice();
-            board.setPieceFromChar(
-                    promotionSquare.column(),
-                    promotionSquare.row(),
-                    switch(choice) {
-                        case QUEEN:  yield p.isWhite()? 'Q':'q';
-                        case ROOK:   yield p.isWhite()? 'R':'r';
-                        case BISHOP: yield p.isWhite()? 'B':'b';
-                        case KNIGHT: yield p.isWhite()? 'N':'n';
-                        default:     yield p.isWhite()? 'Q':'q';
-                    }
-            );
+            char code = switch (choice) {
+                case QUEEN  -> p.isWhite() ? 'Q' : 'q';
+                case ROOK   -> p.isWhite() ? 'R' : 'r';
+                case BISHOP -> p.isWhite() ? 'B' : 'b';
+                case KNIGHT -> p.isWhite() ? 'N' : 'n';
+                default     -> p.isWhite() ? 'Q' : 'q';
+            };
+            board.setPieceFromChar(p.getPosition().column(), p.getPosition().row(), code);
         }
-        // Move was successful, switch turns first
-        switchTurn();
 
-        // Check if this move ended the game
-        Board.GameResult result = board.getGameResult();
-        if (result != Board.GameResult.IN_PROGRESS) {
+        // Verifica fim de jogo
+        GameResult result = getGameResult();
+        if (result != GameResult.IN_PROGRESS) {
             isGameOver = true;
-            // Don't switch turns if game is over
             return true;
         }
 
+        // Troca de jogador
+        switchTurn();
         return true;
     }
 
@@ -127,7 +168,7 @@ public class ChessGame implements Serializable, IOriginator {
             if (lines[row+1].length() < 8) {
                 throw new IllegalArgumentException("Invalid board row: " + (row+1));
             }
-            
+
             for (int col = 0; col < 8; col++) {
                 char pieceChar = lines[row+1].charAt(col);
                 if (pieceChar != '.') {
@@ -179,7 +220,7 @@ public class ChessGame implements Serializable, IOriginator {
     }
 
     public String getGameStatus() {
-        Board.GameResult result = board.getGameResult();
+        GameResult result = getGameResult();
         if (isGameOver) {
             return switch (result) {
                 case WHITE_WINS ->
@@ -200,7 +241,7 @@ public class ChessGame implements Serializable, IOriginator {
             case STALEMATE ->
                 "Game drawn by stalemate";
             case IN_PROGRESS -> {
-                if (board.isPlayerInCheck(currentPlayer.isWhite())) {
+                if (isPlayerInCheck(currentPlayer.isWhite())) {
                     yield "Check! " + (currentPlayer.isWhite() ? "White" : "Black") + " to move";
                 }
                 yield (currentPlayer.isWhite() ? "White" : "Black") + " to move";
@@ -278,6 +319,120 @@ public class ChessGame implements Serializable, IOriginator {
             System.err.println("Erro ao guardar o jogo: " + e.getMessage());
             e.printStackTrace();
         }
+    }
+
+    public boolean isPlayerInCheck(boolean isWhite) {
+        Square kingPosition = findKingPosition(isWhite);
+        if (kingPosition == null) {
+            return false;
+        }
+
+        // Check if any opponent piece can attack the king
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                Piece opponentPiece = board.getPieceAt(col, row);
+                if (opponentPiece != null && opponentPiece.isWhite() != isWhite) {
+                    ArrayList<Square> moves = opponentPiece.getMoves(board);
+                    if (moves.contains(kingPosition)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private Square findKingPosition(boolean isWhite) {
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                Piece piece = board.getPieceAt(col, row);
+                if (piece instanceof King && piece.isWhite() == isWhite) {
+                    return new Square(col, row);
+                }
+            }
+        }
+        return null;
+    }
+
+    public Piece getPieceAt(int col, int row) {
+        return board.getPieceAt(col,row);
+    }
+
+    public ArrayList<Point> getValidMovesAt(int col, int row) {
+        ArrayList<Point> validMoves = new ArrayList<>();
+        for (Square square : board.getPieceAt(col, row).getMoves(board)) {
+            validMoves.add(new Point(square.column(), square.row()));
+        }
+        return validMoves;
+    }
+
+
+    public enum GameResult {
+        IN_PROGRESS,
+        WHITE_WINS,
+        BLACK_WINS,
+        STALEMATE
+    }
+
+    public GameResult getGameResult() {
+        boolean whiteInCheck = isPlayerInCheck(true);
+        boolean blackInCheck = isPlayerInCheck(false);
+
+        // Check if any player has legal moves
+        boolean whiteHasMoves = hasLegalMoves(true);
+        boolean blackHasMoves = hasLegalMoves(false);
+
+        if (whiteInCheck && !whiteHasMoves) {
+            return GameResult.BLACK_WINS;
+        }
+        if (blackInCheck && !blackHasMoves) {
+            return GameResult.WHITE_WINS;
+        }
+        if (!whiteHasMoves || !blackHasMoves) {
+            return GameResult.STALEMATE;
+        }
+
+        return GameResult.IN_PROGRESS;
+    }
+
+
+    private boolean hasLegalMoves(boolean isWhite) {
+        // Get all pieces of the current player
+        for (int col = 0; col < BOARD_SIZE; col++) {
+            for (int row = 0; row < BOARD_SIZE; row++) {
+                Piece piece = board.getPieceAt(col, row);
+                if (piece != null && piece.isWhite() == isWhite) {
+                    // Get all possible moves for this piece
+                    ArrayList<Square> moves = piece.getMoves(board);
+
+                    // Try each move to see if it's legal
+                    for (Square move : moves) {
+                        // Save current state
+                        Square originalPosition = piece.getPosition();
+                        Piece targetPiece = board.getPieceAt(move.column(), move.row());
+
+                        // Try move
+                        board.setPiece(move.column(), move.row(), piece);
+                        board.setPiece(originalPosition.column(), originalPosition.row(), null);
+                        piece.setPosition(move);
+
+                        // Check if move is legal (doesn't leave king in check)
+                        boolean causesCheck = isPlayerInCheck(isWhite);
+
+                        // Restore position
+                        board.setPiece(originalPosition.column(), originalPosition.row(), piece);
+                        board.setPiece(move.column(), move.row(), targetPiece);
+                        piece.setPosition(originalPosition);
+
+                        // If we found a legal move, return true
+                        if (!causesCheck) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
 
 }
