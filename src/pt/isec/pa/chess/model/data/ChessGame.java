@@ -166,47 +166,86 @@ public class ChessGame implements Serializable, IOriginator {
         return board;
     }
     /**
-     * Importa um jogo a partir de uma string no formato suportado.
+     * Importa um jogo a partir de uma string no formato CSV.
      * Substitui o estado atual pelo jogo importado.
-     * @param gameState String com o estado do jogo
+     * @param gameState String com o estado do jogo em formato CSV
      */
     public void importGame(String gameState) {
-        String[] lines = gameState.split("\n");
-        if (lines.length < 10) { // Need at least current player + 8 rows + 1 player name
-            throw new IllegalArgumentException("Invalid game state format");
-        }
-
         // Clear the current board
         board.clearBoard();
         
-        // Set the current player based on first line
-        String playerTurn = lines[0].trim();
-        if ("W".equals(playerTurn)) {
-            currentPlayer = whitePlayer;
-        } else if ("B".equals(playerTurn)) {
-            currentPlayer = blackPlayer;
-        } else {
-            throw new IllegalArgumentException("Invalid player turn indicator: " + playerTurn);
+        // Collect all CSV data into one string, removing line breaks within the CSV
+        String csvData = gameState.replaceAll("\\n", ",").replaceAll("\\r", "");
+        
+        // Split by comma and clean up
+        String[] parts = csvData.split(",");
+        if (parts.length < 1) {
+            throw new IllegalArgumentException("Invalid CSV format");
         }
-
-        // Import board state (mantendo a orientação do tabuleiro)
-        for (int row = 0; row < 8; row++) {
-            if (lines[row+1].length() < 8) {
-                throw new IllegalArgumentException("Invalid board row: " + (row+1));
-            }
-
-            for (int col = 0; col < 8; col++) {
-                char pieceChar = lines[row+1].charAt(col);
-                if (pieceChar != '.') {
-                    Piece piece = createPieceFromChar(pieceChar, col, row);
-                    board.setPiece(col, row, piece);
+        
+        // Find and set current player from first non-empty part
+        String playerTurn = null;
+        int startIndex = 0;
+        
+        for (int i = 0; i < parts.length; i++) {
+            String part = parts[i].trim();
+            if (!part.isEmpty()) {
+                if ("WHITE".equalsIgnoreCase(part) || "white".equalsIgnoreCase(part)) {
+                    currentPlayer = whitePlayer;
+                    playerTurn = part;
+                    startIndex = i + 1;
+                    break;
+                } else if ("BLACK".equalsIgnoreCase(part) || "black".equalsIgnoreCase(part)) {
+                    currentPlayer = blackPlayer;
+                    playerTurn = part;
+                    startIndex = i + 1;
+                    break;
                 }
             }
         }
-
-        // Set player names
-        whitePlayer.setName(lines[9]);
-        blackPlayer.setName(lines[10]);
+        
+        if (playerTurn == null) {
+            throw new IllegalArgumentException("Invalid or missing player turn indicator");
+        }
+        
+        // Process each piece starting from after the player indicator
+        for (int i = startIndex; i < parts.length; i++) {
+            String pieceData = parts[i].trim();
+            if (pieceData.isEmpty()) continue;
+            
+            // Parse piece notation (e.g., "Ra1*", "Pa2", "ke8*")
+            if (pieceData.length() < 3) continue;
+            
+            char pieceType = pieceData.charAt(0);
+            char colChar = pieceData.charAt(1);
+            char rowChar = pieceData.charAt(2);
+            
+            // Convert chess notation to array indices
+            int col = colChar - 'a';
+            int row = 8 - (rowChar - '0'); // Convert from chess row to array row
+            
+            if (!isWithinBounds(col, row)) continue;
+            
+            // Determine if piece is white (uppercase) or black (lowercase)
+            boolean isWhite = Character.isUpperCase(pieceType);
+            
+            // Create and place piece
+            Piece piece = createPieceFromChar(pieceType, col, row);
+            if (piece != null) {
+                // Check if piece has moved (indicated by '*')
+                if (pieceData.endsWith("*")) {
+                    piece.setHasMoved();
+                }
+                board.setPiece(col, row, piece);
+            }
+        }
+        
+        // Set default player names if not provided
+        whitePlayer.setName("White Player");
+        blackPlayer.setName("Black Player");
+        
+        // Reset game state
+        isGameOver = false;
     }
     /**
      * Exporta o estado atual do jogo para uma string em formato específico.
@@ -313,18 +352,19 @@ public class ChessGame implements Serializable, IOriginator {
     }
 
     private Piece createPieceFromChar(char pieceChar, int col, int row) {
-        boolean isWhite = Character.isLowerCase(pieceChar);
+        boolean isWhite = Character.isUpperCase(pieceChar);
         char type = Character.toUpperCase(pieceChar);
         Square pos = new Square(col, row);
-        switch (type) {
-            case 'P': return new Pawn(isWhite, pos);
-            case 'R': return new Rook(isWhite, pos);
-            case 'N': return new Knight(isWhite, pos);
-            case 'B': return new Bishop(isWhite, pos);
-            case 'Q': return new Queen(isWhite, pos);
-            case 'K': return new King(isWhite, pos);
-            default: throw new IllegalArgumentException("Unknown piece type: " + pieceChar);
-        }
+        
+        return switch (type) {
+            case 'P' -> new Pawn(isWhite, pos);
+            case 'R' -> new Rook(isWhite, pos);
+            case 'N' -> new Knight(isWhite, pos);
+            case 'B' -> new Bishop(isWhite, pos);
+            case 'Q' -> new Queen(isWhite, pos);
+            case 'K' -> new King(isWhite, pos);
+            default -> null;
+        };
     }
 
 
