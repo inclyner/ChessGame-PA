@@ -1,4 +1,3 @@
-
 /**
  * Classe fachada observável entre a interface gráfica (UI) e a lógica do jogo (modelo).
  * Responsável por coordenar o fluxo de jogo, atualizar a UI através de PropertyChangeSupport,
@@ -15,7 +14,6 @@ import pt.isec.pa.chess.model.data.GameResult;
 import pt.isec.pa.chess.model.data.Square;
 import pt.isec.pa.chess.model.data.memento.ChessGameCaretaker;
 import pt.isec.pa.chess.ui.Point;
-import pt.isec.pa.chess.ui.PromotionHandler;
 
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
@@ -27,8 +25,8 @@ import java.util.ArrayList;
 public class ChessGameManager {
 
     private ChessGame game;
-    private PromotionHandler promotionHandler;
-    private final PropertyChangeSupport pcs;
+    private pt.isec.pa.chess.ui.PromotionHandler promotionHandler;
+    private transient final PropertyChangeSupport pcs;
     public static final String PROP_BOARD_STATE = "boardState";
     public static final String PROP_CURRENT_PLAYER = "currentPlayer";
     public static final String PROP_GAME_OVER = "gameOver";
@@ -38,12 +36,22 @@ public class ChessGameManager {
 
 
 
-    public ChessGameManager(ChessGame game, PromotionHandler handler) {
+    public ChessGameManager(ChessGame game, pt.isec.pa.chess.ui.PromotionHandler handler) {
         this.game = game;
         this.promotionHandler = handler;
-        this.game.getBoard().setPromotionHandler(handler);
+        // REMOVE this line - Board doesn't need promotion handler
+        // this.game.getBoard().setPromotionHandler(handler);
+        
+        // ADD this line - ChessGame needs it
+        this.game.setPromotionHandler(new PromotionHandlerAdapter(handler));
+        
         pcs = new PropertyChangeSupport(this);
         this.caretaker = new ChessGameCaretaker(game);
+    }
+    public ChessGameManager() {
+        this.game = new ChessGame(); // Initialize game
+        pcs = new PropertyChangeSupport(this);
+        this.caretaker = new ChessGameCaretaker(game); // pass it to caretaker
     }
     /**
      * Inicia um novo jogo com os nomes dos jogadores.
@@ -78,7 +86,7 @@ public class ChessGameManager {
         // Verificar se há peça na posição de destino (para registrar captura)
         String pieceAtTarget = getPieceAt(to.x(), to.y());
 
-        caretaker.save();
+        
 
         if (game.move(fromSquare, toSquare)) {
             // Converter coordenadas para notação de xadrez (ex: e2-e4)
@@ -137,6 +145,11 @@ public class ChessGameManager {
 
     public void importGame(String gameState) {
         try {
+            // Preserve promotion handler before import
+            if (this.promotionHandler != null) {
+                game.setPromotionHandler(new PromotionHandlerAdapter(this.promotionHandler));
+            }
+            
             game.importGame(gameState);
             
             // Atualizar a vista após importação bem-sucedida
@@ -233,6 +246,11 @@ public class ChessGameManager {
     public void loadGameSerial(String path) {
         ChessGame loaded = ChessGame.loadGameSerial(path);
         if (loaded != null) {
+            // Preserve the promotion handler
+            if (this.promotionHandler != null) {
+                loaded.setPromotionHandler(new PromotionHandlerAdapter(this.promotionHandler));
+            }
+            
             this.game = loaded;
             pcs.firePropertyChange(PROP_BOARD_STATE, null, game.getBoard());
             pcs.firePropertyChange(PROP_CURRENT_PLAYER, null, game.getCurrentPlayer());
@@ -253,5 +271,34 @@ public class ChessGameManager {
     public boolean isPlayerInCheck(boolean whitePlaying) {
         return game.isPlayerInCheck(whitePlaying);
 
+    }
+
+    public ChessGame getGame() {
+        return game;
+    }
+
+    /**
+     * Sets the promotion handler for the game.
+     * @param handler The promotion handler to use (from UI package)
+     */
+    public void setPromotionHandler(pt.isec.pa.chess.ui.PromotionHandler handler) {  
+        this.promotionHandler = handler;
+        if (game != null) {
+            game.setPromotionHandler(new PromotionHandlerAdapter(handler));
+        }
+    }
+
+    // Add this inner class at the bottom of ChessGameManager
+    private static class PromotionHandlerAdapter implements pt.isec.pa.chess.model.data.PromotionHandler {
+        private final pt.isec.pa.chess.ui.PromotionHandler uiHandler;
+        
+        public PromotionHandlerAdapter(pt.isec.pa.chess.ui.PromotionHandler uiHandler) {
+            this.uiHandler = uiHandler;
+        }
+        
+        @Override
+        public pt.isec.pa.chess.model.data.pieces.PieceType getPromotionChoice() {
+            return uiHandler.getPromotionChoice();
+        }
     }
 }

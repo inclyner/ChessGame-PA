@@ -43,6 +43,9 @@ public class RootPane extends BorderPane { //View-Controller
         createViews();
         registerHandlers();
         update();
+        
+        // Connect promotion handler
+        data.getGameManager().setPromotionHandler(data.getBoardFx());
     }
 
     private void createViews() {

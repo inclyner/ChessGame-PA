@@ -29,7 +29,7 @@ public class ChessGame implements Serializable, IOriginator {
     int BOARD_SIZE;
     private boolean promotionPending = false;
     private Square promotionSquare = null;
-    private PromotionHandler promotionHandler;
+    private transient PromotionHandler promotionHandler;
 
 
     public ChessGame() {
@@ -63,6 +63,9 @@ public class ChessGame implements Serializable, IOriginator {
      * Limpa o tabuleiro, reinicializa as peças e reseta todos os estados.
      */
     public void resetGame() {
+        // Store the current promotion handler before reset
+        PromotionHandler currentHandler = this.promotionHandler;
+        
         // Reset board to initial position
         board = new Board();
         
@@ -78,6 +81,9 @@ public class ChessGame implements Serializable, IOriginator {
         
         // Reset board size reference
         BOARD_SIZE = board.getBoardSize();
+        
+        // Restore the promotion handler
+        this.promotionHandler = currentHandler;
     }
 
     /**
@@ -173,14 +179,27 @@ public class ChessGame implements Serializable, IOriginator {
         if (piece instanceof Pawn p &&
                 (p.isWhite() && p.getPosition().row() == 0 || !p.isWhite() && p.getPosition().row() == 7)) {
 
-            PieceType choice = promotionHandler.getPromotionChoice();
+            PieceType choice = PieceType.QUEEN; // Default fallback
+            
+            if (promotionHandler != null) {
+                System.out.println("Promotion handler found: " + promotionHandler.getClass().getSimpleName());
+                choice = promotionHandler.getPromotionChoice();
+            } else {
+                System.out.println("NO PROMOTION HANDLER SET - defaulting to Queen");
+            }
+            
             char code = switch (choice) {
                 case QUEEN  -> p.isWhite() ? 'Q' : 'q';
                 case ROOK   -> p.isWhite() ? 'R' : 'r';
                 case BISHOP -> p.isWhite() ? 'B' : 'b';
                 case KNIGHT -> p.isWhite() ? 'N' : 'n';
-                default     -> p.isWhite() ? 'Q' : 'q';
+                default     -> {
+                    System.out.println("Unknown piece type: " + choice + ", defaulting to Queen");
+                    yield p.isWhite() ? 'Q' : 'q';
+                }
             };
+            
+            System.out.println("Creating piece with code: " + code); // Debug line
             board.setPieceFromChar(p.getPosition().column(), p.getPosition().row(), code);
         }
 
@@ -214,6 +233,9 @@ public class ChessGame implements Serializable, IOriginator {
      * @param gameState String com o estado do jogo em formato CSV
      */
     public void importGame(String gameState) {
+        // Store the current promotion handler before clearing
+        PromotionHandler currentHandler = this.promotionHandler;
+        
         // Clear the current board
         board.clearBoard();
         
@@ -286,6 +308,9 @@ public class ChessGame implements Serializable, IOriginator {
         // Set default player names if not provided
         whitePlayer.setName("White Player");
         blackPlayer.setName("Black Player");
+        
+        // Restore the promotion handler
+        this.promotionHandler = currentHandler;
         
         // Reset game state
         isGameOver = false;
@@ -391,8 +416,69 @@ public class ChessGame implements Serializable, IOriginator {
         return BOARD_SIZE;
     }
 
+    /**
+     * Sets the promotion handler for this game.
+     * @param handler The promotion handler to use
+     */
     public void setPromotionHandler(PromotionHandler handler) {
         this.promotionHandler = handler;
+    }
+
+    /**
+     * Handles pawn promotion at the specified position.
+     * This method should be called by the UI when a pawn reaches the promotion row.
+     * @param col Column of the pawn to promote
+     * @param row Row of the pawn to promote
+     * @param pieceType Type of piece to promote to
+     * @return true if promotion was successful
+     */
+    public boolean promotePawn(int col, int row, PieceType pieceType) {
+        Piece piece = board.getPieceAt(col, row);
+        
+        if (!(piece instanceof Pawn)) {
+            return false;
+        }
+        
+        Pawn pawn = (Pawn) piece;
+        
+        // Verify this pawn is eligible for promotion
+        if (!((pawn.isWhite() && row == 0) || (!pawn.isWhite() && row == 7))) {
+            return false;
+        }
+        
+        char code = switch (pieceType) {
+            case QUEEN  -> pawn.isWhite() ? 'Q' : 'q';
+            case ROOK   -> pawn.isWhite() ? 'R' : 'r';
+            case BISHOP -> pawn.isWhite() ? 'B' : 'b';
+            case KNIGHT -> pawn.isWhite() ? 'N' : 'n';
+            default     -> pawn.isWhite() ? 'Q' : 'q';
+        };
+        
+        board.setPieceFromChar(col, row, code);
+        return true;
+    }
+
+    /**
+     * Checks if there's a pawn at the given position that needs promotion.
+     * @param col Column to check
+     * @param row Row to check
+     * @return true if there's a pawn that needs promotion
+     */
+    public boolean needsPromotion(int col, int row) {
+        Piece piece = board.getPieceAt(col, row);
+        if (!(piece instanceof Pawn pawn)) {
+            return false;
+        }
+        
+        return (pawn.isWhite() && row == 0) || (!pawn.isWhite() && row == 7);
+    }
+
+    /**
+     * Gets the promotion handler for UI interaction.
+     * @return The current promotion handler
+     */
+    public PromotionHandler getPromotionHandler() {
+        return promotionHandler;
     }
 
     @Override
@@ -402,6 +488,9 @@ public class ChessGame implements Serializable, IOriginator {
 
     @Override
     public void restore(IMemento memento) {
+        // Store the current promotion handler before restore
+        PromotionHandler currentHandler = this.promotionHandler;
+    
         Object snapshot = memento.getSnapshot();
         if (snapshot instanceof ChessGame restored) {
             this.board = restored.board;
@@ -412,8 +501,10 @@ public class ChessGame implements Serializable, IOriginator {
             this.BOARD_SIZE = restored.BOARD_SIZE;
             this.promotionPending = restored.promotionPending;
             this.promotionSquare = restored.promotionSquare;
-
         }
+    
+        // Restore the promotion handler (since it's set by the UI layer)
+        this.promotionHandler = currentHandler;
     }
 
     private Piece createPieceFromChar(char pieceChar, int col, int row) {
@@ -571,6 +662,26 @@ public class ChessGame implements Serializable, IOriginator {
         return false;
     }
 
-
-
+    /**
+     * Checks if a move is valid without actually executing it.
+     * @param from Source square
+     * @param to Destination square
+     * @return true if the move is valid
+     */
+    public boolean isValidMove(Square from, Square to) {
+        if (!isWithinBounds(from.column(), from.row()) || !isWithinBounds(to.column(), to.row())) {
+            return false;
+        }
+        
+        Piece piece = board.getPieceAt(from.column(), from.row());
+        if (piece == null || piece.isWhite() != currentPlayer.isWhite()) {
+            return false;
+        }
+        
+        // Check if the destination is in the piece's valid moves
+        ArrayList<Point> validMoves = getValidMovesAt(from.column(), from.row());
+        Point targetPoint = new Point(to.column(), to.row());
+        
+        return validMoves.contains(targetPoint);
+    }
 }
