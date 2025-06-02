@@ -1,3 +1,12 @@
+/**
+ * Classe principal de lógica do jogo de xadrez.
+ * Atua como fachada sobre o tabuleiro e as peças, mantendo o estado do jogo,
+ * controlando turnos, regras especiais (promoção, roque, en passant),
+ * verificação de xeque/mate e lógica de vitória/empate.
+ *
+ * Esta classe é independente da interface gráfica e contém apenas lógica de domínio.
+ */
+
 package pt.isec.pa.chess.model.data;
 
 import pt.isec.pa.chess.model.data.memento.IMemento;
@@ -31,12 +40,24 @@ public class ChessGame implements Serializable, IOriginator {
         BOARD_SIZE= board.getBoardSize();
     }
 
+    /**
+     * Inicia o jogo com os nomes dos jogadores.
+     * @param player1Name do jogador das peças brancas
+     * @param player2Name Nome do jogador das peças pretas
+     * @return true se o jogo foi iniciado com sucesso
+     */
     public boolean startGame(String player1Name, String player2Name) {
         whitePlayer.setName(player1Name);
         blackPlayer.setName(player2Name);
         return true;
     }
-
+    /**
+     * Tenta mover uma peça de uma posição para outra.
+     * Valida o turno, a jogada, aplica roque, en passant, promoção e atualiza o estado do jogo.
+     * @param from Casa de origem
+     * @param to Casa de destino
+     * @return true se o movimento foi realizado com sucesso
+     */
     public boolean move(Square from, Square to) {
         if (isGameOver) return false;
 
@@ -140,10 +161,15 @@ public class ChessGame implements Serializable, IOriginator {
         return currentPlayer;
     }
 
+    //! acho que não podemos ter isto aqui
     public Board getBoard() {
         return board;
     }
-
+    /**
+     * Importa um jogo a partir de uma string no formato suportado.
+     * Substitui o estado atual pelo jogo importado.
+     * @param gameState String com o estado do jogo
+     */
     public void importGame(String gameState) {
         String[] lines = gameState.split("\n");
         if (lines.length < 10) { // Need at least current player + 8 rows + 1 player name
@@ -182,7 +208,10 @@ public class ChessGame implements Serializable, IOriginator {
         whitePlayer.setName(lines[9]);
         blackPlayer.setName(lines[10]);
     }
-
+    /**
+     * Exporta o estado atual do jogo para uma string em formato específico.
+     * @return Representação textual do jogo
+     */
     public String exportGame() {
         StringBuilder export = new StringBuilder();
 
@@ -289,11 +318,11 @@ public class ChessGame implements Serializable, IOriginator {
         Square pos = new Square(col, row);
         switch (type) {
             case 'P': return new Pawn(isWhite, pos);
-            case 'R': return new pt.isec.pa.chess.model.data.pieces.Rook(isWhite, pos);
-            case 'N': return new pt.isec.pa.chess.model.data.pieces.Knight(isWhite, pos);
-            case 'B': return new pt.isec.pa.chess.model.data.pieces.Bishop(isWhite, pos);
-            case 'Q': return new pt.isec.pa.chess.model.data.pieces.Queen(isWhite, pos);
-            case 'K': return new pt.isec.pa.chess.model.data.pieces.King(isWhite, pos);
+            case 'R': return new Rook(isWhite, pos);
+            case 'N': return new Knight(isWhite, pos);
+            case 'B': return new Bishop(isWhite, pos);
+            case 'Q': return new Queen(isWhite, pos);
+            case 'K': return new King(isWhite, pos);
             default: throw new IllegalArgumentException("Unknown piece type: " + pieceChar);
         }
     }
@@ -320,7 +349,11 @@ public class ChessGame implements Serializable, IOriginator {
             e.printStackTrace();
         }
     }
-
+    /**
+     * Indica se o jogador da cor especificada está em xeque.
+     * @param isWhite true para jogador branco, false para preto
+     * @return true se o jogador está em xeque
+     */
     public boolean isPlayerInCheck(boolean isWhite) {
         Square kingPosition = findKingPosition(isWhite);
         if (kingPosition == null) {
@@ -368,7 +401,10 @@ public class ChessGame implements Serializable, IOriginator {
 
 
 
-
+    /**
+     * Indica o estado atual do jogo (em progresso, xeque-mate, empate).
+     * @return Estado do jogo
+     */
     public GameResult getGameResult() {
         boolean whiteInCheck = isPlayerInCheck(true);
         boolean blackInCheck = isPlayerInCheck(false);

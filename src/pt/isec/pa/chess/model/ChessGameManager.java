@@ -1,3 +1,13 @@
+
+/**
+ * Classe fachada observável entre a interface gráfica (UI) e a lógica do jogo (modelo).
+ * Responsável por coordenar o fluxo de jogo, atualizar a UI através de PropertyChangeSupport,
+ * gerir undo/redo com o padrão Memento, e encapsular interações externas com o modelo.
+ *
+ * Não contém lógica de jogo diretamente, mas delega-a para a classe {@link ChessGame}.
+ * Também regista logs e gere serialização.
+ */
+
 package pt.isec.pa.chess.model;
 
 import pt.isec.pa.chess.model.data.ChessGame;
@@ -35,7 +45,12 @@ public class ChessGameManager {
         pcs = new PropertyChangeSupport(this);
         this.caretaker = new ChessGameCaretaker(game);
     }
-
+    /**
+     * Inicia um novo jogo com os nomes dos jogadores.
+     * @param player1 Nome do jogador branco
+     * @param player2 Nome do jogador preto
+     * @return true se o jogo foi iniciado
+     */
     public boolean startGame(String player1, String player2) {
         this.player1 = player1;
         this.player2 = player2;
@@ -49,7 +64,13 @@ public class ChessGameManager {
         }
         return false;
     }
-
+    /**
+     * Move uma peça da posição inicial para a posição final.
+     * Atualiza o log, notifica observadores e verifica o estado do jogo.
+     * @param from Coordenadas iniciais (como Point)
+     * @param to Coordenadas finais (como Point)
+     * @return true se o movimento foi realizado
+     */
     public boolean move(Point from, Point to) {
         Square fromSquare = new Square(from.x(), from.y());
         Square toSquare = new Square(to.x(), to.y());
@@ -139,7 +160,12 @@ public class ChessGameManager {
         return game.exportGame();
     }
 
-
+    /**
+     * Obtém o nome da peça numa casa específica do tabuleiro.
+     * @param col Coluna
+     * @param row Linha
+     * @return Nome da peça (ou null se vazio)
+     */
     public String getPieceAt(int col, int row) {
         if(game.getPieceAt(col, row)!= null) {
             return game.getPieceAt(col, row).toString();
@@ -150,11 +176,21 @@ public class ChessGameManager {
     public boolean isWhitePlaying() {
         return game.getCurrentPlayer().isWhite();
     }
-
+    /**
+     * Verifica se uma posição está dentro dos limites do tabuleiro.
+     * @param col Coluna
+     * @param row Linha
+     * @return true se estiver dentro dos limites
+     */
     public boolean isWithinBounds(int col, int row) {
         return game.isWithinBounds(col, row);
     }
-
+    /**
+     * Retorna os movimentos válidos da peça na posição especificada.
+     * @param col Coluna da peça
+     * @param row Linha da peça
+     * @return Lista de posições para onde a peça pode mover
+     */
     public ArrayList<Point> getValidMovesAt(int col, int row) {
         return game.getValidMovesAt(col,row);
     }
