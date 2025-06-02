@@ -1,3 +1,11 @@
+/**
+ * Singleton responsável por manter um histórico textual dos eventos do jogo.
+ * Regista mensagens como início de jogo, jogadas, capturas, xeque, xeque-mate e importações/exportações.
+ *
+ * Pode ser observado por listeners para atualização da interface em tempo real.
+ */
+
+
 package pt.isec.pa.chess.model;
 
 import java.beans.PropertyChangeListener;
@@ -30,18 +38,27 @@ public class ModelLog {
         }
         return instance;
     }
-
+    /**
+     * Adiciona uma nova entrada ao log.
+     * @param entry Texto a ser registrado
+     */
     public void addEntry(String entry) {
         String oldLog = log.toString();
         log.append(entry).append(System.lineSeparator());
         String newLog = log.toString();
         pcs.firePropertyChange(PROP_LOG_ENTRY_ADDED, oldLog, newLog);
     }
-
+    /**
+     * Obtém todas as entradas do log em formato de string.
+     * @return Histórico do log
+     */
     public String getLog() {
         return log.toString();
     }
 
+    /**
+     * Limpa todas as entradas do log.
+     */
     public void clear() {
         String oldLog = log.toString();
         log.setLength(0);

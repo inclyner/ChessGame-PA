@@ -9,9 +9,13 @@ public class ModelData {
     private BoardFx boardFx;
 
     public ModelData() {
-        ChessGame game = new ChessGame();
-        gameManager = new ChessGameManager(game, null); // Temporarily pass null
+        // Create game manager
+        gameManager = new ChessGameManager();
+
+        // Create board UI
         boardFx = new BoardFx(gameManager);
+
+        gameManager.setPromotionHandler(boardFx);
     }
 
     public ChessGameManager getGameManager() {

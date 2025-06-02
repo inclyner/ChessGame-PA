@@ -43,6 +43,9 @@ public class RootPane extends BorderPane { //View-Controller
         createViews();
         registerHandlers();
         update();
+        
+        // Connect promotion handler
+        data.getGameManager().setPromotionHandler(data.getBoardFx());
     }
 
     private void createViews() {
@@ -92,6 +95,8 @@ public class RootPane extends BorderPane { //View-Controller
             File hFile = fileChooser.showOpenDialog(this.getScene().getWindow());
             if (hFile != null) {
                 System.out.println(hFile.getAbsolutePath());
+                gameManager.loadGameSerial(hFile.getAbsolutePath());
+                update();
 
 
             }
@@ -107,6 +112,7 @@ public class RootPane extends BorderPane { //View-Controller
             File hFile = fileChooser.showSaveDialog(this.getScene().getWindow());
             if (hFile != null) {
                 System.out.println(hFile.getAbsolutePath());
+                gameManager.saveGameSerial(hFile.getAbsolutePath());
             }
         });
 
@@ -116,7 +122,7 @@ public class RootPane extends BorderPane { //View-Controller
             fileChooser.setTitle("Load Chess Game");
             fileChooser.setInitialDirectory(new File("."));
             fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("Chess Game (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
             );
             
@@ -168,7 +174,7 @@ public class RootPane extends BorderPane { //View-Controller
             fileChooser.setTitle("Save Game");
             fileChooser.setInitialDirectory(new File("."));
             fileChooser.getExtensionFilters().addAll(
-                new FileChooser.ExtensionFilter("Chess Game (*.chess)", "*.chess"),
+                new FileChooser.ExtensionFilter("Chess Game (*.csv)", "*.csv"),
                 new FileChooser.ExtensionFilter("All Files", "*.*")
             );
             

@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="ChessApp" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="pt.isec.pa.chess.ui.MainJFX" />
+    <module name="PAChess" />
+    <option name="VM_PARAMETERS" value="--module-path &quot;C:\Users\AfonsoRA\Documents\GitHub\javafx-sdk-24.0.1\lib&quot; --add-modules javafx.controls,javafx.fxml" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

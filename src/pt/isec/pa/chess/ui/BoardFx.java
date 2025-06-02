@@ -3,6 +3,8 @@ package pt.isec.pa.chess.ui;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
+import pt.isec.pa.chess.model.data.ChessGame;
+import pt.isec.pa.chess.model.data.GameResult;
 import pt.isec.pa.chess.ui.Point;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -10,6 +12,8 @@ import javafx.scene.text.FontWeight;
 import pt.isec.pa.chess.model.ChessGameManager;
 import pt.isec.pa.chess.model.ModelLog;
 import pt.isec.pa.chess.model.data.Board;
+import pt.isec.pa.chess.ui.PromotionHandler;
+import pt.isec.pa.chess.model.data.pieces.PieceType;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -23,7 +27,7 @@ import javafx.scene.media.MediaPlayer;
 import static java.lang.Character.isLowerCase;
 import static java.lang.Character.isUpperCase;
 
-public class BoardFx extends Canvas implements PropertyChangeListener {
+public class BoardFx extends Canvas implements PropertyChangeListener, PromotionHandler {
 
     private ChessGameManager gameManager;
     private final Color LIGHT_SQUARE = Color.web("#f0d9b5");
@@ -300,23 +304,23 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     }
 
 
-
-    public String getPromotionChoice(boolean isWhite) {
-        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", "Queen", "Knight");
+    @Override
+    public PieceType getPromotionChoice() {
+        List<String> choices = List.of("Queen", "Rook", "Bishop", "Knight");
+        ChoiceDialog<String> dialog = new ChoiceDialog<>("Queen", choices);
         dialog.setTitle("Pawn Promotion");
         dialog.setHeaderText("Choose piece for pawn promotion");
         dialog.setContentText("Select piece:");
 
         Optional<String> result = dialog.showAndWait();
-        if (isWhite) {
-            return result.map(choice
-                    -> choice.equals("Queen") ? "Q" : "K"
-            ).orElse("Q");
-        }
-        return result.map(choice
-                -> choice.equals("Queen") ? "q" : "k"
-        ).orElse("q");
 
+        return result.map(choice -> switch (choice) {
+            case "Queen" -> PieceType.QUEEN;
+            case "Rook" -> PieceType.ROOK;
+            case "Bishop" -> PieceType.BISHOP;
+            case "Knight" -> PieceType.KNIGHT;
+            default -> PieceType.QUEEN;
+        }).orElse(PieceType.QUEEN);
     }
 
     private String getPieceImgName(String piece) {
@@ -404,13 +408,13 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     }
 
     // Add sound for check or checkmate
-    Board.GameResult result = gameManager.getGame().getBoard().getGameResult();
-    if (result == Board.GameResult.WHITE_WINS || result == Board.GameResult.BLACK_WINS) {
+    GameResult result = gameManager.getGameResult();
+    if (result == GameResult.WHITE_WINS || result == GameResult.BLACK_WINS) {
         //System.out.println("Detected CHECKMATE! Adding sound.");
         soundFiles.add("checkmate.mp3");
     } else {
         // Check if the OPPONENT is in check after this move
-        boolean opponentInCheck = gameManager.getGame().getBoard().isPlayerInCheck(gameManager.isWhitePlaying());
+        boolean opponentInCheck = gameManager.isPlayerInCheck(gameManager.isWhitePlaying());
         if (opponentInCheck) {
             //System.out.println("Detected CHECK! Adding sound.");
             soundFiles.add("check.mp3");
