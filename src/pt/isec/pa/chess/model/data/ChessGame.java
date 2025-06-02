@@ -367,12 +367,7 @@ public class ChessGame implements Serializable, IOriginator {
     }
 
 
-    public enum GameResult {
-        IN_PROGRESS,
-        WHITE_WINS,
-        BLACK_WINS,
-        STALEMATE
-    }
+
 
     public GameResult getGameResult() {
         boolean whiteInCheck = isPlayerInCheck(true);
@@ -434,5 +429,7 @@ public class ChessGame implements Serializable, IOriginator {
         }
         return false;
     }
+
+
 
 }

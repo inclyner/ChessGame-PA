@@ -4,6 +4,7 @@ import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
 import javafx.scene.control.ChoiceDialog;
 import pt.isec.pa.chess.model.data.ChessGame;
+import pt.isec.pa.chess.model.data.GameResult;
 import pt.isec.pa.chess.ui.Point;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -405,8 +406,8 @@ public class BoardFx extends Canvas implements PropertyChangeListener {
     }
 
     // Add sound for check or checkmate
-    ChessGame.GameResult result = gameManager.getGameResult();
-    if (result == ChessGame.GameResult.WHITE_WINS || result == ChessGame.GameResult.BLACK_WINS) {
+    GameResult result = gameManager.getGameResult();
+    if (result == GameResult.WHITE_WINS || result == GameResult.BLACK_WINS) {
         //System.out.println("Detected CHECKMATE! Adding sound.");
         soundFiles.add("checkmate.mp3");
     } else {

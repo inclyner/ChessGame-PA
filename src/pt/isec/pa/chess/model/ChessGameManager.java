@@ -1,7 +1,7 @@
 package pt.isec.pa.chess.model;
 
-import pt.isec.pa.chess.model.data.Board;
 import pt.isec.pa.chess.model.data.ChessGame;
+import pt.isec.pa.chess.model.data.GameResult;
 import pt.isec.pa.chess.model.data.Square;
 import pt.isec.pa.chess.model.data.memento.ChessGameCaretaker;
 import pt.isec.pa.chess.ui.Point;
@@ -77,7 +77,7 @@ public class ChessGameManager {
             }
             
             // Verificar estado do jogo após movimento
-            ChessGame.GameResult result = game.getGameResult();
+            GameResult result = game.getGameResult();
             switch (result) {
                 case WHITE_WINS:
                     ModelLog.getInstance().addEntry("XEQUE-MATE! Brancas (" + player1 + ") vencem.");
@@ -210,7 +210,7 @@ public class ChessGameManager {
 
     }
 
-    public ChessGame.GameResult getGameResult() {
+    public GameResult getGameResult() {
         return game.getGameResult();
     }
 
