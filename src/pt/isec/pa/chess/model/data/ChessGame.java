@@ -41,16 +41,59 @@ public class ChessGame implements Serializable, IOriginator {
     }
 
     /**
-     * Inicia o jogo com os nomes dos jogadores.
-     * @param player1Name do jogador das peças brancas
+     * Inicia um novo jogo com os nomes dos jogadores.
+     * Reseta completamente o estado do jogo atual.
+     * @param player1Name Nome do jogador das peças brancas
      * @param player2Name Nome do jogador das peças pretas
      * @return true se o jogo foi iniciado com sucesso
      */
     public boolean startGame(String player1Name, String player2Name) {
+        // Reset the entire game state
+        resetGame();
+        
+        // Set player names
         whitePlayer.setName(player1Name);
         blackPlayer.setName(player2Name);
+        
         return true;
     }
+
+    /**
+     * Reseta o jogo para o estado inicial.
+     * Limpa o tabuleiro, reinicializa as peças e reseta todos os estados.
+     */
+    public void resetGame() {
+        // Reset board to initial position
+        board = new Board();
+        
+        // Reset players but keep existing instances
+        whitePlayer = new Player(true);
+        blackPlayer = new Player(false);
+        
+        // Reset game state
+        currentPlayer = whitePlayer; // White always starts
+        isGameOver = false;
+        promotionPending = false;
+        promotionSquare = null;
+        
+        // Reset board size reference
+        BOARD_SIZE = board.getBoardSize();
+    }
+
+    /**
+     * Inicia um novo jogo mantendo os nomes dos jogadores atuais.
+     * Útil para reiniciar sem precisar reintroduzir nomes.
+     */
+    public void newGame() {
+        String whiteName = whitePlayer.getName();
+        String blackName = blackPlayer.getName();
+        
+        resetGame();
+        
+        whitePlayer.setName(whiteName);
+        blackPlayer.setName(blackName);
+    }
+
     /**
      * Tenta mover uma peça de uma posição para outra.
      * Valida o turno, a jogada, aplica roque, en passant, promoção e atualiza o estado do jogo.
@@ -248,39 +291,61 @@ public class ChessGame implements Serializable, IOriginator {
         isGameOver = false;
     }
     /**
-     * Exporta o estado atual do jogo para uma string em formato específico.
-     * @return Representação textual do jogo
+     * Exporta o estado atual do jogo para uma string em formato CSV compatível com importGame.
+     * @return Representação textual do jogo em formato CSV
      */
     public String exportGame() {
         StringBuilder export = new StringBuilder();
 
-        // Export current turn (W for White, B for Black)
-        export.append(currentPlayer.isWhite() ? "W" : "B").append("\n");
+        // Export current turn (WHITE or BLACK)
+        export.append(currentPlayer.isWhite() ? "WHITE" : "BLACK");
 
-        // Export board state
+        // Export all pieces on the board
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 Piece piece = board.getPieceAt(col, row);
-                if (piece == null) {
-                    export.append(".");
-                } else {
+                if (piece != null) {
+                    export.append(",");
                     
-                    String pieceChar = piece.toString();
-                    if (piece.isWhite()) {
-                        export.append(pieceChar.toLowerCase());
-                    } else {
-                        export.append(pieceChar.toUpperCase());
+                    // Get piece character based on type and color
+                    char pieceChar = getPieceChar(piece);
+                    
+                    // Convert position to chess notation (a1-h8)
+                    char colChar = (char) ('a' + col);
+                    char rowChar = (char) ('1' + (7 - row)); // Convert array row to chess row
+                    
+                    // Add piece notation
+                    export.append(pieceChar).append(colChar).append(rowChar);
+                    
+                    // Add '*' if piece has moved
+                    if (piece.hasMoved()) {
+                        export.append("*");
                     }
                 }
             }
-            export.append("\n");
         }
 
-        // Export player names
-        export.append(whitePlayer.getName()).append("\n");
-        export.append(blackPlayer.getName());
-
         return export.toString();
+    }
+
+    /**
+     * Converte uma peça para o caractere correspondente (maiúsculo = branco, minúsculo = preto).
+     * @param piece A peça a converter
+     * @return Caractere representativo da peça
+     */
+    private char getPieceChar(Piece piece) {
+        char baseChar = switch (piece) {
+            case Pawn p -> 'P';
+            case Rook r -> 'R';
+            case Knight n -> 'N';
+            case Bishop b -> 'B';
+            case Queen q -> 'Q';
+            case King k -> 'K';
+            default -> '?';
+        };
+        
+        // White pieces = uppercase, Black pieces = lowercase
+        return piece.isWhite() ? baseChar : Character.toLowerCase(baseChar);
     }
 
     public boolean isGameOver() {
